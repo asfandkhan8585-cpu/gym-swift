@@ -1,0 +1,40 @@
+{% extends 'gym/base.html' %}
+{% block title %}Staff Attendance{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Staff Attendance</h1><span class="subtitle">{{ today|date:"l, j F Y" }}</span>
+  <div class="header-actions"><span class="badge badge-green" style="font-size:12px;padding:3px 8px;">✓ {{ present }}</span><span class="badge badge-red" style="font-size:12px;padding:3px 8px;">✗ {{ absent }}</span><a href="{% url 'attendance_today' %}" class="btn btn-sm">Member Attendance →</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="panel">
+  <div class="panel-head">Employees — Tap to mark</div>
+  <div class="scroll-box-lg">
+  {% for item in data %}
+  <div class="att-row" id="emprow-{{ item.emp.pk }}">
+    <div class="att-name"><a href="{% url 'employee_detail' item.emp.pk %}">{{ item.emp.full_name }}</a></div>
+    <div class="att-role">{{ item.emp.get_role_display }}</div>
+    <div class="att-phone">{{ item.emp.phone }}</div>
+    <div class="att-btn-group">
+      <button class="att-btn {% if item.present == True %}present{% endif %}" onclick="markEmp({{ item.emp.pk }},true,this)">✓ Present</button>
+      <button class="att-btn {% if item.present == False %}absent{% endif %}" onclick="markEmp({{ item.emp.pk }},false,this)">✗ Absent</button>
+    </div>
+    <div id="empstatus-{{ item.emp.pk }}" style="width:80px;">{% if item.present == True %}<span class="att-status-present">✓ Present</span>{% elif item.present == False %}<span class="att-status-absent">✗ Absent</span>{% else %}<span class="att-status-unmarked">— Unmarked</span>{% endif %}</div>
+  </div>
+  {% empty %}<div class="no-data">No active employees.</div>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';
+async function markEmp(id,present,btn){
+  const row=document.getElementById('emprow-'+id);
+  row.querySelectorAll('.att-btn').forEach(b=>b.classList.remove('present','absent'));
+  btn.classList.add(present?'present':'absent');
+  const st=document.getElementById('empstatus-'+id);
+  if(st) st.innerHTML=present?'<span class="att-status-present">✓ Present</span>':'<span class="att-status-absent">✗ Absent</span>';
+  try{await fetch('{% url "mark_employee_attendance" %}',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({emp_id:id,is_present:present})});}catch(e){console.error(e);}
+}
+</script>
+{% endblock %}

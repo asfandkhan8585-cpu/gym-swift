@@ -1,0 +1,30 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Plans{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Membership Plans</h1>
+  <div class="header-actions"><a href="{% url 'plan_add' %}" class="btn btn-primary btn-sm">+ Add Plan</a><a href="{% url 'addon_list' %}" class="btn btn-sm">Add-Ons →</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<table class="data-table">
+  <thead><tr><th>Plan</th><th>Duration</th><th class="text-right">Price</th><th>Cardio</th><th>Weights</th><th>Trainer</th><th>Locker</th><th>Steam</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+  {% for p in plans %}
+  <tr>
+    <td><b>{{ p.name }}</b>{% if p.description %}<br><span class="text-small text-muted">{{ p.description|truncatechars:40 }}</span>{% endif %}</td>
+    <td>{{ p.get_duration_display }}{% if p.duration == 0 and p.custom_days %} ({{ p.custom_days }}d){% endif %}</td>
+    <td class="text-right amount text-bold">{{ currency }}{{ p.price|intcomma }}</td>
+    <td class="text-center">{% if p.includes_cardio %}<span class="feature-check">✓</span>{% else %}<span class="feature-cross">—</span>{% endif %}</td>
+    <td class="text-center">{% if p.includes_weights %}<span class="feature-check">✓</span>{% else %}<span class="feature-cross">—</span>{% endif %}</td>
+    <td class="text-center">{% if p.includes_trainer %}<span class="feature-check">✓</span>{% else %}<span class="feature-cross">—</span>{% endif %}</td>
+    <td class="text-center">{% if p.includes_locker %}<span class="feature-check">✓</span>{% else %}<span class="feature-cross">—</span>{% endif %}</td>
+    <td class="text-center">{% if p.includes_steam %}<span class="feature-check">✓</span>{% else %}<span class="feature-cross">—</span>{% endif %}</td>
+    <td>{% if p.is_active %}<span class="badge badge-green">YES</span>{% else %}<span class="badge badge-gray">NO</span>{% endif %}</td>
+    <td><a href="{% url 'plan_edit' p.pk %}" class="btn btn-xs">Edit</a> <a href="{% url 'plan_delete' p.pk %}" class="btn btn-xs btn-red">Delete</a></td>
+  </tr>
+  {% empty %}<tr><td colspan="10" class="no-data">No plans yet. <a href="{% url 'plan_add' %}">Add one →</a></td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

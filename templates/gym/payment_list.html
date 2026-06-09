@@ -1,0 +1,40 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Payments{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Payments</h1><span class="subtitle">{{ currency }}{{ total_collected|intcomma }} collected (filtered)</span>
+  <div class="header-actions"><a href="{% url 'payment_add' %}" class="btn btn-primary btn-sm">+ Record Payment</a><a href="{% url 'defaulter_list' %}" class="btn btn-red btn-sm">Defaulters</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="filter-bar">
+  <form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Member, phone, TID..." style="width:180px;">
+    <select name="status"><option value="">All Status</option><option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option><option value="partial" {% if status == 'partial' %}selected{% endif %}>Partial</option><option value="overdue" {% if status == 'overdue' %}selected{% endif %}>Overdue</option><option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option></select>
+    <select name="method"><option value="">All Methods</option><option value="cash" {% if method == 'cash' %}selected{% endif %}>Cash</option><option value="easypaisa" {% if method == 'easypaisa' %}selected{% endif %}>EasyPaisa</option><option value="jazzcash" {% if method == 'jazzcash' %}selected{% endif %}>JazzCash</option><option value="bank" {% if method == 'bank' %}selected{% endif %}>Bank</option></select>
+    <input type="month" name="month" value="{{ month }}">
+    <button type="submit" class="btn btn-sm">Filter</button>
+    {% if q or status or method or month %}<a href="{% url 'payment_list' %}" class="btn btn-sm">Clear</a>{% endif %}
+  </form>
+</div>
+<table class="data-table">
+  <thead><tr><th>Date</th><th>Member</th><th>For</th><th class="text-right">Due</th><th class="text-right">Paid</th><th class="text-right">Balance</th><th>Method</th><th>TID</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for p in page_obj %}
+  <tr {% if p.status == 'overdue' %}class="defaulter-row"{% endif %}>
+    <td class="text-small">{{ p.payment_date|date:"d M Y" }}</td>
+    <td><a href="{% url 'member_detail' p.member.pk %}"><b>{{ p.member.full_name }}</b></a></td>
+    <td class="text-small">{{ p.get_payment_for_display }}</td>
+    <td class="text-right amount">{{ currency }}{{ p.amount_due|intcomma }}</td>
+    <td class="text-right amount text-green">{{ currency }}{{ p.amount_paid|intcomma }}</td>
+    <td class="text-right amount {% if p.balance_due > 0 %}text-red{% endif %}">{{ currency }}{{ p.balance_due|intcomma }}</td>
+    <td>{% if p.method == 'cash' %}<span class="badge badge-gray">Cash</span>{% elif p.method == 'easypaisa' %}<span class="badge badge-green">EasyPaisa</span>{% elif p.method == 'jazzcash' %}<span class="badge badge-orange">JazzCash</span>{% elif p.method == 'bank' %}<span class="badge badge-blue">Bank</span>{% else %}<span class="badge badge-gray">{{ p.method }}</span>{% endif %}</td>
+    <td class="mono text-small text-muted">{{ p.transaction_id|default:"—" }}</td>
+    <td><span class="badge {% if p.status == 'paid' %}badge-green{% elif p.status == 'partial' %}badge-yellow{% else %}badge-red{% endif %}">{{ p.status|upper }}</span></td>
+  </tr>
+  {% empty %}<tr><td colspan="9" class="no-data">No payments found.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% if page_obj.has_other_pages %}<div class="pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">&lsaquo; Prev</a>{% endif %}<span class="current">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next &rsaquo;</a>{% endif %}</div>{% endif %}
+{% endblock %}

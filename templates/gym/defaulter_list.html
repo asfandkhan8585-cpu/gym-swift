@@ -1,0 +1,34 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Defaulters{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Defaulter List</h1><span class="subtitle">{{ count }} member{{ count|pluralize }} with dues</span>
+  <div class="header-actions"><a href="{% url 'whatsapp_generator' %}" class="btn btn-sm" style="background:#25d366;border-color:#128c7e;color:#fff;">📱 Reminders</a><button onclick="window.print()" class="btn btn-sm">🖨 Print</button></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px;">
+  <div class="stat-card danger"><div class="stat-label">Total Defaulters</div><div class="stat-value text-red">{{ count }}</div></div>
+  <div class="stat-card danger"><div class="stat-label">Total Outstanding</div><div class="stat-value text-red">{{ currency }}{{ total_outstanding|intcomma }}</div></div>
+</div>
+<table class="data-table">
+  <thead><tr><th>#</th><th>Member</th><th>Phone</th><th>CNIC</th><th>Shift</th><th class="text-right">Due</th><th class="text-right">Paid</th><th class="text-right">Balance</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for d in defaulters %}
+  <tr class="defaulter-row">
+    <td>{{ forloop.counter }}</td>
+    <td><a href="{% url 'member_detail' d.member__id %}" style="font-weight:bold;color:#cc0000;">{{ d.member__full_name }}</a></td>
+    <td class="mono">{{ d.member__phone }}</td>
+    <td class="mono text-small">{{ d.member__cnic|default:"—" }}</td>
+    <td>{% if d.member__shift == 'ladies' %}<span class="tag tag-ladies">Ladies</span>{% else %}<span class="tag tag-gents">Gents</span>{% endif %}</td>
+    <td class="text-right amount">{{ currency }}{{ d.total_due|intcomma }}</td>
+    <td class="text-right amount">{{ currency }}{{ d.total_paid|intcomma }}</td>
+    <td class="text-right amount text-bold text-red">{{ currency }}{{ d.balance|intcomma }}</td>
+    <td><a href="{% url 'payment_add_member' d.member__id %}" class="btn btn-xs btn-primary">Collect</a><a href="{% url 'whatsapp_generator' %}?member={{ d.member__id }}" class="btn btn-xs" style="background:#25d366;color:#fff;border-color:#128c7e;">WA</a></td>
+  </tr>
+  {% empty %}<tr><td colspan="9" class="no-data">🎉 No defaulters! All fees up to date.</td></tr>{% endfor %}
+  </tbody>
+  {% if defaulters %}<tfoot><tr style="font-weight:bold;background:#fff5f5;"><td colspan="7" style="padding:5px 8px;">TOTAL OUTSTANDING</td><td class="text-right amount text-red">{{ currency }}{{ total_outstanding|intcomma }}</td><td></td></tr></tfoot>{% endif %}
+</table>
+{% endblock %}

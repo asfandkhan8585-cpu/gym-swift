@@ -1,0 +1,13 @@
+{% extends 'gym/base.html' %}
+{% block title %}{% if instance %}Edit{% else %}New{% endif %} Template{% endblock %}
+{% block page_header %}<div class="page-header"><h1>{% if instance %}Edit{% else %}New{% endif %} WhatsApp Template</h1><div class="header-actions"><a href="{% url 'whatsapp_templates' %}" class="btn btn-sm">← Back</a></div></div>{% endblock %}
+{% block content %}
+<div class="form-wrap" style="max-width:560px;">
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><div class="form-group"><label>Template Name *</label>{{ form.name }}</div><div class="form-group"><label>Type</label>{{ form.template_type }}</div></div>
+    <div class="form-row full"><div class="form-group"><label>Message Body *</label>{{ form.body }}<span class="helptext">{{ form.body.help_text }}</span></div></div>
+    <div class="form-check">{{ form.is_default }}<label>Set as default for this type</label></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Save Template</button><a href="{% url 'whatsapp_templates' %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

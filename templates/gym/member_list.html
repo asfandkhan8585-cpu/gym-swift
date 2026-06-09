@@ -1,0 +1,77 @@
+{% extends 'gym/base.html' %}
+{% block title %}Members{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Members</h1><span class="subtitle">{{ total }} total</span>
+  <div class="header-actions">
+    <a href="{% url 'member_add' %}" class="btn btn-primary btn-sm">+ Add Member</a>
+    <a href="{% url 'former_members' %}" class="btn btn-sm">Former Members{% if former_count %} ({{ former_count }}){% endif %}</a>
+    <a href="{% url 'defaulter_list' %}" class="btn btn-red btn-sm">Defaulters</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="filter-bar">
+  <form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Name, phone, CNIC..." style="width:210px;">
+    <select name="shift"><option value="">All Shifts</option>
+      <option value="gents" {% if shift == 'gents' %}selected{% endif %}>Gents</option>
+      <option value="ladies" {% if shift == 'ladies' %}selected{% endif %}>Ladies</option>
+      <option value="open" {% if shift == 'open' %}selected{% endif %}>Open</option></select>
+    <select name="status"><option value="">All Status</option>
+      <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+      <option value="expired" {% if status == 'expired' %}selected{% endif %}>Expired</option>
+      <option value="suspended" {% if status == 'suspended' %}selected{% endif %}>Suspended</option>
+      <option value="freeze" {% if status == 'freeze' %}selected{% endif %}>Frozen</option></select>
+    {% if trainers %}
+    <select name="trainer"><option value="">All Trainers</option>
+      {% for t in trainers %}<option value="{{ t.pk }}" {% if trainer == t.pk|stringformat:'s' %}selected{% endif %}>{{ t.full_name }}</option>{% endfor %}
+    </select>{% endif %}
+    <button type="submit" class="btn btn-sm">Filter</button>
+    {% if q or shift or status or trainer %}<a href="{% url 'member_list' %}" class="btn btn-sm">Clear</a>{% endif %}
+  </form>
+</div>
+<table class="data-table">
+  <thead><tr>
+    <th>#</th><th>Name</th><th>Phone</th><th>CNIC</th><th>Shift</th><th>Trainer</th>
+    <th>Plan</th><th>Expires</th><th>Status</th><th>Actions</th>
+  </tr></thead>
+  <tbody>
+  {% for m in page_obj %}
+  {% with mem=m.active_mem %}
+  <tr>
+    <td class="text-muted text-small">{{ forloop.counter }}</td>
+    <td><a href="{% url 'member_detail' m.pk %}" style="font-weight:bold;">{{ m.full_name }}</a>
+      {% if m.blood_group != 'unknown' %}<span class="text-muted text-small"> {{ m.blood_group }}</span>{% endif %}</td>
+    <td class="mono">{{ m.phone }}</td>
+    <td class="mono text-muted text-small">{{ m.cnic|default:"—" }}</td>
+    <td>{% if m.shift == 'ladies' %}<span class="tag tag-ladies">Ladies</span>
+      {% elif m.shift == 'gents' %}<span class="tag tag-gents">Gents</span>
+      {% else %}<span class="tag tag-open">Open</span>{% endif %}</td>
+    <td class="text-small">{% if m.assigned_trainer %}<span class="tag tag-trainer">{{ m.assigned_trainer.full_name }}</span>{% else %}—{% endif %}</td>
+    <td class="text-small">{% if mem %}{{ mem.plan_display_name }}{% else %}<span class="text-red">None</span>{% endif %}</td>
+    <td class="text-small">{% if mem %}
+      {% if mem.days_remaining <= 7 %}<span class="text-red text-bold">{{ mem.end_date|date:"d M Y" }} ({{ mem.days_remaining }}d)</span>
+      {% else %}{{ mem.end_date|date:"d M Y" }}{% endif %}
+      {% else %}<span class="text-red">—</span>{% endif %}</td>
+    <td><span class="badge {% if m.status == 'active' %}badge-green{% elif m.status == 'expired' %}badge-red{% elif m.status == 'freeze' %}badge-blue{% else %}badge-gray{% endif %}">{{ m.status|upper }}</span></td>
+    <td style="white-space:nowrap;">
+      <a href="{% url 'member_detail' m.pk %}" class="btn btn-xs">View</a>
+      <a href="{% url 'member_edit' m.pk %}" class="btn btn-xs">Edit</a>
+      <a href="{% url 'assign_membership' m.pk %}" class="btn btn-xs btn-green">Plan</a>
+      <a href="{% url 'payment_add_member' m.pk %}" class="btn btn-xs btn-blue">Pay</a>
+    </td>
+  </tr>
+  {% endwith %}
+  {% empty %}<tr><td colspan="10" class="no-data">No members found.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&shift={{ shift }}&status={{ status }}">&lsaquo; Prev</a>{% endif %}
+  <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q }}&shift={{ shift }}&status={{ status }}">Next &rsaquo;</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

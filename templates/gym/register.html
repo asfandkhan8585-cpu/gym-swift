@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Create Account</title>{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<style>
+.lg-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%)}
+.lg-card{background:var(--panel);width:100%;max-width:420px;border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.lg-top{padding:30px 32px 16px;text-align:center}
+.lg-badge{width:58px;height:58px;border-radius:15px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));box-shadow:0 8px 20px rgba(0,0,0,.18)}
+.lg-badge svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2}
+.lg-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px}
+.lg-sub{font-size:12.5px;color:var(--muted)}
+.lg-body{padding:6px 32px 26px}
+.lg-body label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.lg-body input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;background:var(--bg);color:var(--text);box-sizing:border-box}
+.lg-body input:focus{outline:none;border-color:var(--accent)}
+.lg-field{margin-bottom:11px}
+.lg-help{font-size:10.5px;color:var(--muted);margin-top:3px;display:block}
+.lg-btn{width:100%;padding:12px;border:none;border-radius:9px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.lg-btn:hover{filter:brightness(.93)}
+.lg-foot{text-align:center;padding:15px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)}
+.lg-foot a{color:var(--accent);font-weight:600;text-decoration:none}
+.lg-msg{margin:0 32px 12px;padding:9px 12px;border-radius:8px;font-size:12.5px}
+.lg-msg.error{background:#fde8e8;color:#b91c1c;border:1px solid #f5c2c2}
+.lg-note{font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="lg-screen">
+  <div class="lg-card">
+    <div class="lg-top">
+      <div class="lg-badge"><svg viewBox="0 0 24 24"><rect x="1" y="9" width="4" height="6" rx="1"/><rect x="19" y="9" width="4" height="6" rx="1"/><path d="M5 12h14M7 7v10M17 7v10"/></svg></div>
+      <div class="lg-title">Create your gym account</div>
+      <div class="lg-sub">Your own private workspace &middot; 30-day free trial</div>
+    </div>
+    {% if messages %}{% for msg in messages %}<div class="lg-msg {{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+    <div class="lg-body">
+      <form method="post">{% csrf_token %}
+        <div class="lg-field"><label>Gym Name</label><input type="text" name="gym_name" placeholder="e.g. Iron Paradise" required autofocus></div>
+        <div class="lg-field"><label>Username</label><input type="text" name="username" required></div>
+        <div class="lg-field"><label>Email (optional)</label><input type="email" name="email"></div>
+        <div class="lg-field"><label>Password</label><input type="password" name="password1" required></div>
+        <div class="lg-field"><label>Confirm Password</label><input type="password" name="password2" required></div>
+        <div class="lg-field"><label>Owner Key (4 digits)</label><input type="password" name="owner_key" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="e.g. 1947" required><span class="lg-help">PIN to unlock Owner mode (reports, finances, settings)</span></div>
+        <button type="submit" class="lg-btn">Create Gym &amp; Enter</button>
+      </form>
+    </div>
+    <div class="lg-foot">Already have an account? <a href="{% url 'login' %}">Sign in</a></div>
+  </div>
+</div>
+</body>
+</html>

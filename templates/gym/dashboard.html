@@ -1,0 +1,124 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Dashboard{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <span class="subtitle">{% if custom_range %}{{ period_start }} to {{ period_end }}{% else %}{{ today|date:"l, j F Y" }}{% endif %}</span>
+  <div class="header-actions">
+    <form method="get" style="display:flex;gap:5px;align-items:center;">
+      <span class="text-small text-muted">Analytics:</span>
+      <input type="date" name="start" value="{% if custom_range %}{{ period_start }}{% endif %}" required>
+      <input type="date" name="end" value="{% if custom_range %}{{ period_end }}{% endif %}" required>
+      <button type="submit" class="btn btn-sm btn-primary">View</button>
+      {% if custom_range %}<a href="{% url 'dashboard' %}" class="btn btn-sm">This Month</a>{% endif %}
+    </form>
+    <a href="{% url 'member_add' %}" class="btn btn-primary btn-sm">+ New Member</a>
+    <a href="{% url 'attendance_today' %}" class="btn btn-green btn-sm">Mark Attendance</a>
+    <a href="{% url 'payment_add' %}" class="btn btn-sm">+ Payment</a>
+    <a href="{% url 'expense_add' %}" class="btn btn-sm">+ Expense</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Active Members</div><div class="stat-value">{{ total_members|intcomma }}</div><div class="stat-sub">{{ new_this_month }} joined this month</div></div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Today's Check-ins</div><div class="stat-value text-green">{{ today_present }}</div><div class="stat-sub">{{ checkins_week }} in last 7 days</div></div>
+  </div>
+  {% if owner_mode %}
+  <div class="stat-card info">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Monthly Revenue</div><div class="stat-value">{{ monthly_revenue|intcomma }}</div><div class="stat-sub">{{ currency }} collected this month</div></div>
+  </div>
+  <div class="stat-card {% if net_profit >= 0 %}success{% else %}danger{% endif %}">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Net Profit</div><div class="stat-value {% if net_profit >= 0 %}text-green{% else %}text-red{% endif %}">{{ net_profit|intcomma }}</div><div class="stat-sub">Revenue &minus; expenses</div></div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Monthly Expenses</div><div class="stat-value">{{ monthly_expenses|intcomma }}</div><div class="stat-sub">{{ currency }} spent this month</div></div>
+  </div>
+  {% endif %}
+  <div class="stat-card danger">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Defaulters</div><div class="stat-value text-red">{{ overdue_count }}</div><div class="stat-sub">{{ currency }}{{ total_outstanding|intcomma }} outstanding</div></div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Active Staff</div><div class="stat-value">{{ total_employees }}</div><div class="stat-sub"><a href="{% url 'employee_list' %}">Manage staff &rarr;</a></div></div>
+  </div>
+  <div class="stat-card info">
+    <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><circle cx="8" cy="12" r="1"/><circle cx="16" cy="12" r="1"/></svg></div>
+    <div class="stat-body"><div class="stat-label">Lockers</div><div class="stat-value">{{ occupied_lockers }}<span style="font-size:16px;color:var(--muted);">/{{ total_lockers }}</span></div><div class="stat-sub"><a href="{% url 'locker_list' %}">Occupied / total &rarr;</a></div></div>
+  </div>
+</div>
+
+<div class="layout-2col">
+  <div class="panel">
+    <div class="panel-head">Memberships Expiring This Week <a href="{% url 'member_list' %}">All members &rarr;</a></div>
+    <div class="panel-body" style="padding:0;">
+      <div class="scroll-box">
+      {% if expiring_soon %}
+      <table class="data-table">
+        <tr><th>Member</th><th>Plan</th><th>Expires</th><th>Action</th></tr>
+        {% for r in expiring_soon %}
+        <tr>
+          <td><a href="{% url 'member_detail' r.member.pk %}"><b>{{ r.member.full_name }}</b></a><br><span class="text-muted text-small">{{ r.member.phone }}</span></td>
+          <td class="text-small">{{ r.plan_display_name }}</td>
+          <td><span class="text-red text-bold">{{ r.end_date|date:"d M" }}</span><br><span class="text-small text-muted">{{ r.days_remaining }} day{{ r.days_remaining|pluralize }}</span></td>
+          <td><a href="{% url 'whatsapp_generator' %}?member={{ r.member.pk }}" class="btn btn-xs btn-green">Remind</a></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}<div class="no-data">No memberships expiring in the next 7 days.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">Today's Check-ins <a href="{% url 'attendance_today' %}">Mark attendance &rarr;</a></div>
+    <div class="panel-body" style="padding:0;">
+      <div class="scroll-box">
+      {% for log in recent_checkins %}
+      <div class="att-row">
+        <div class="att-name"><a href="{% url 'member_detail' log.member.pk %}">{{ log.member.full_name }}</a></div>
+        <div class="att-phone">{{ log.member.phone }}</div>
+        {% if log.member.shift == 'ladies' %}<span class="tag tag-ladies">Ladies</span>{% else %}<span class="tag tag-gents">Gents</span>{% endif %}
+        <span class="att-status-present">{% if log.check_in_time %}{{ log.check_in_time|time:"H:i" }}{% else %}Present{% endif %}</span>
+      </div>
+      {% empty %}<div class="no-data">No check-ins recorded yet today.</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel mt-16">
+  <div class="panel-head">Recent Payments <a href="{% url 'payment_list' %}">All payments &rarr;</a></div>
+  <div class="panel-body" style="padding:0;">
+    <div class="scroll-box">
+    {% if recent_payments %}
+    <table class="data-table">
+      <tr><th>Member</th><th>Date</th><th>For</th><th>Method</th><th class="text-right">Amount</th><th>Status</th></tr>
+      {% for p in recent_payments %}
+      <tr>
+        <td><a href="{% url 'member_detail' p.member.pk %}"><b>{{ p.member.full_name }}</b></a></td>
+        <td class="text-small text-muted">{{ p.payment_date|date:"d M Y" }}</td>
+        <td class="text-small">{{ p.get_payment_for_display }}</td>
+        <td>{% if p.method == 'cash' %}<span class="badge badge-gray">Cash</span>{% elif p.method == 'easypaisa' %}<span class="badge badge-green">EasyPaisa</span>{% elif p.method == 'jazzcash' %}<span class="badge badge-orange">JazzCash</span>{% elif p.method == 'bank' %}<span class="badge badge-blue">Bank</span>{% else %}<span class="badge badge-gray">{{ p.method }}</span>{% endif %}</td>
+        <td class="text-right amount text-green">{{ currency }}{{ p.amount_paid|intcomma }}</td>
+        <td><span class="badge {% if p.status == 'paid' %}badge-green{% elif p.status == 'partial' %}badge-yellow{% else %}badge-red{% endif %}">{{ p.status|upper }}</span></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}<div class="no-data">No payments recorded yet.</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

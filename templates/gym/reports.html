@@ -1,0 +1,93 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Reports{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Reports</h1><span class="subtitle">{{ p_start|date:"d M Y" }} &ndash; {{ p_end|date:"d M Y" }}</span>
+  <div class="header-actions">
+    <form method="get" style="display:flex;gap:5px;align-items:center;">
+      <span class="text-small text-muted">Month:</span>
+      <select name="month" onchange="document.getElementById('yi').value=this.options[this.selectedIndex].dataset.year;this.form.submit()">
+        {% for m in months %}<option value="{{ m.month }}" data-year="{{ m.year }}" {% if not custom_range and m.month == mo and m.year == yr %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+      </select>
+      <input type="hidden" name="year" id="yi" value="{{ yr }}">
+    </form>
+    <form method="get" style="display:flex;gap:5px;align-items:center;">
+      <span class="text-small text-muted">Range:</span>
+      <input type="date" name="start" value="{% if custom_range %}{{ start_str }}{% endif %}" required>
+      <input type="date" name="end" value="{% if custom_range %}{{ end_str }}{% endif %}" required>
+      <button type="submit" class="btn btn-sm btn-primary">Search</button>
+    </form>
+    <a href="{% url 'export_transactions' %}?start={{ start_str }}&end={{ end_str }}" class="btn btn-sm btn-green">Download Excel (CSV)</a>
+    <button onclick="window.print()" class="btn btn-sm">Print</button>
+    <a href="{% url 'advanced_reports' %}?start={{ start_str }}&end={{ end_str }}" class="btn btn-sm btn-blue">Advanced Reporting &rarr;</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+
+<!-- Headline numbers -->
+<div class="stat-grid" style="margin-bottom:12px;">
+  <div class="stat-card info">
+    <div class="stat-body"><div class="stat-label">Total Revenue</div><div class="stat-value">{{ currency }}{{ total_revenue|intcomma }}</div><div class="stat-sub">Collected this period</div></div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-body"><div class="stat-label">Total Expenses</div><div class="stat-value">{{ currency }}{{ total_expenses|intcomma }}</div><div class="stat-sub">Spent this period</div></div>
+  </div>
+  <div class="stat-card {% if net_profit >= 0 %}success{% else %}danger{% endif %}">
+    <div class="stat-body"><div class="stat-label">Net Profit</div><div class="stat-value {% if net_profit >= 0 %}text-green{% else %}text-red{% endif %}">{{ currency }}{{ net_profit|intcomma }}</div><div class="stat-sub">{{ profit_margin|floatformat:1 }}% margin</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-body"><div class="stat-label">Collection Rate</div><div class="stat-value">{{ collection_rate|floatformat:0 }}%</div><div class="stat-sub">{{ currency }}{{ collected_of_billed|intcomma }} of {{ currency }}{{ billed|intcomma }} billed</div></div>
+  </div>
+</div>
+
+<!-- Transaction ledger (Excel style) -->
+<div class="panel mb-12">
+  <div class="panel-head">Transaction Log &mdash; {{ transactions|length }} entr{{ transactions|length|pluralize:"y,ies" }}</div>
+  <div class="panel-body" style="padding:0;">
+    <div class="scroll-box-lg">
+      <table class="excel-table">
+        <thead>
+          <tr><th>#</th><th>Date</th><th>Member</th><th>Phone</th><th>For</th><th>Method</th><th>Status</th><th class="num">Due</th><th class="num">Paid</th><th class="num">Balance</th><th>Txn ID</th></tr>
+        </thead>
+        <tbody>
+        {% for p in transactions %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ p.payment_date|date:"d M Y" }}</td>
+            <td><a href="{% url 'member_detail' p.member.pk %}">{{ p.member.full_name }}</a></td>
+            <td class="mono">{{ p.member.phone }}</td>
+            <td>{{ p.get_payment_for_display }}</td>
+            <td>{{ p.get_method_display }}</td>
+            <td>{{ p.get_status_display }}</td>
+            <td class="num">{{ currency }}{{ p.amount_due|floatformat:2 }}</td>
+            <td class="num">{{ currency }}{{ p.amount_paid|floatformat:2 }}</td>
+            <td class="num">{{ currency }}{{ p.balance_due|floatformat:2 }}</td>
+            <td class="mono">{{ p.transaction_id|default:"-" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="11" class="no-data">No transactions in this period.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Profit & Loss statement -->
+<div class="panel">
+  <div class="panel-head">Profit &amp; Loss Statement</div>
+  <div class="panel-body" style="padding:0;">
+    <table class="pl-table">
+      <tr class="pl-section"><td>REVENUE</td><td></td></tr>
+      <tr><td>Membership &amp; fees collected</td><td>{{ currency }}{{ total_revenue|intcomma }}</td></tr>
+      <tr class="pl-total"><td>Total Revenue</td><td class="text-green">{{ currency }}{{ total_revenue|intcomma }}</td></tr>
+      <tr class="pl-section"><td>EXPENSES</td><td></td></tr>
+      {% for e in exp_by_cat %}<tr><td>{{ e.category|title }}</td><td>{{ currency }}{{ e.t|intcomma }}</td></tr>{% empty %}<tr><td>No expenses</td><td>{{ currency }}0</td></tr>{% endfor %}
+      <tr class="pl-total"><td>Total Expenses</td><td class="text-red">{{ currency }}{{ total_expenses|intcomma }}</td></tr>
+      <tr class="{% if net_profit >= 0 %}pl-profit{% else %}pl-loss{% endif %}"><td>NET {% if net_profit >= 0 %}PROFIT{% else %}LOSS{% endif %}</td><td>{{ currency }}{{ net_profit|intcomma }}</td></tr>
+    </table>
+  </div>
+</div>
+{% endblock %}

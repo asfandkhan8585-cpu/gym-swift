@@ -1,0 +1,37 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Staff{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Staff / Employees</h1><span class="subtitle">Monthly payroll: {{ currency }}{{ total_salary|intcomma }}</span>
+  <div class="header-actions"><a href="{% url 'employee_add' %}" class="btn btn-primary btn-sm">+ Add Employee</a><a href="{% url 'employee_attendance' %}" class="btn btn-green btn-sm">Staff Attendance</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="filter-bar">
+  <form method="get" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Name, phone, CNIC..." style="width:180px;">
+    <select name="role"><option value="">All Roles</option>{% for r,label in roles %}<option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <select name="status"><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="on_leave" {% if status == 'on_leave' %}selected{% endif %}>On Leave</option><option value="terminated" {% if status == 'terminated' %}selected{% endif %}>Terminated</option><option value="">All</option></select>
+    <button type="submit" class="btn btn-sm">Filter</button>
+    {% if q or role %}<a href="{% url 'employee_list' %}" class="btn btn-sm">Clear</a>{% endif %}
+  </form>
+</div>
+<table class="data-table">
+  <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>CNIC</th><th>Specialization</th><th class="text-right">Salary</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for e in employees %}
+  <tr>
+    <td><a href="{% url 'employee_detail' e.pk %}"><b>{{ e.full_name }}</b></a></td>
+    <td>{% if e.role == 'trainer' %}<span class="tag tag-trainer">Trainer</span>{% else %}<span class="tag">{{ e.get_role_display }}</span>{% endif %}</td>
+    <td class="mono">{{ e.phone }}</td>
+    <td class="mono text-small text-muted">{{ e.cnic|default:"—" }}</td>
+    <td class="text-small">{{ e.specialization|default:"—"|truncatechars:30 }}</td>
+    <td class="text-right amount">{{ currency }}{{ e.monthly_salary|intcomma }}</td>
+    <td><span class="badge {% if e.status == 'active' %}badge-green{% elif e.status == 'on_leave' %}badge-yellow{% else %}badge-gray{% endif %}">{{ e.status|upper }}</span></td>
+    <td><a href="{% url 'employee_detail' e.pk %}" class="btn btn-xs">View</a><a href="{% url 'employee_edit' e.pk %}" class="btn btn-xs">Edit</a><a href="{% url 'pay_salary' e.pk %}" class="btn btn-xs btn-green">Pay</a></td>
+  </tr>
+  {% empty %}<tr><td colspan="8" class="no-data">No employees. <a href="{% url 'employee_add' %}">Add one →</a></td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

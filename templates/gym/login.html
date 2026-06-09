@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sign In</title>{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<style>
+.lg-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark,#b34700) 100%)}
+.lg-card{background:var(--panel,#fff);width:100%;max-width:400px;border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.lg-top{padding:34px 32px 22px;text-align:center}
+.lg-badge{width:62px;height:62px;border-radius:16px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark,#b34700));box-shadow:0 8px 20px rgba(0,0,0,.18)}
+.lg-badge svg{width:32px;height:32px;stroke:#fff;fill:none;stroke-width:2}
+.lg-title{font-size:21px;font-weight:700;color:var(--text);margin-bottom:4px}
+.lg-sub{font-size:13px;color:var(--muted)}
+.lg-body{padding:8px 32px 30px}
+.lg-body label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.lg-body input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;background:var(--bg);color:var(--text);box-sizing:border-box;transition:border .15s}
+.lg-body input:focus{outline:none;border-color:var(--accent)}
+.lg-field{margin-bottom:15px}
+.lg-btn{width:100%;padding:12px;border:none;border-radius:9px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:filter .15s}
+.lg-btn:hover{filter:brightness(.93)}
+.lg-foot{text-align:center;padding:16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)}
+.lg-foot a{color:var(--accent);font-weight:600;text-decoration:none}
+.lg-msg{margin:0 32px 14px;padding:9px 12px;border-radius:8px;font-size:12.5px}
+.lg-msg.error{background:#fde8e8;color:#b91c1c;border:1px solid #f5c2c2}
+.lg-msg.success{background:#e7f6ec;color:#1a7f37;border:1px solid #b7e0c4}
+</style>
+</head>
+<body>
+<div class="lg-screen">
+  <div class="lg-card">
+    <div class="lg-top">
+      <div class="lg-badge"><svg viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M6.5 17.5l-2 2M17.5 6.5l2-2"/><rect x="1" y="9" width="4" height="6" rx="1"/><rect x="19" y="9" width="4" height="6" rx="1"/></svg></div>
+      <div class="lg-title">Welcome back</div>
+      <div class="lg-sub">Sign in to manage your gym</div>
+    </div>
+    {% if messages %}{% for msg in messages %}<div class="lg-msg {{ msg.tags }}">{{ msg }}</div>{% endfor %}{% endif %}
+    <div class="lg-body">
+      <form method="post">{% csrf_token %}
+        <div class="lg-field"><label>Username</label><input type="text" name="username" autofocus required></div>
+        <div class="lg-field"><label>Password</label><input type="password" name="password" required></div>
+        <button type="submit" class="lg-btn">Sign In</button>
+      </form>
+    </div>
+    <div class="lg-foot">New here? <a href="{% url 'register' %}">Create your gym account</a></div>
+  </div>
+</div>
+</body>
+</html>

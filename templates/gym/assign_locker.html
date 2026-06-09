@@ -1,0 +1,23 @@
+{% extends 'gym/base.html' %}
+{% block title %}Assign Locker{% endblock %}
+{% block page_header %}<div class="page-header"><h1>Assign Locker</h1><span class="subtitle">{{ member.full_name }} ({{ zone }} zone)</span><div class="header-actions"><a href="{% url 'member_detail' member.pk %}" class="btn btn-sm">&larr; Back</a></div></div>{% endblock %}
+{% block content %}
+<div class="form-wrap" style="max-width:600px;">
+  <div class="msg msg-info" style="margin-bottom:14px;">The locker fee must be paid in full before the locker can be assigned. Enter the amount received below.</div>
+  <form method="post">{% csrf_token %}
+    {{ form.member.as_hidden }}
+    <div class="form-row"><div class="form-group"><label>Locker *</label>{{ form.locker }}<span class="helptext">Only available lockers shown</span></div><div class="form-group"><label>Key Number</label>{{ form.key_number }}</div></div>
+    <div class="form-row"><div class="form-group"><label>Assigned Date</label>{{ form.assigned_date }}</div><div class="form-group"><label>Expiry Date (optional)</label>{{ form.expiry_date }}</div></div>
+    <div class="form-section">Payment (required)</div>
+    <div class="form-row thirds">
+      <div class="form-group"><label>Monthly Rate ({{ currency }})</label>{{ form.monthly_rate }}<span class="helptext">Fee for this locker</span></div>
+      <div class="form-group"><label>Amount Paid ({{ currency }}) *</label>{{ form.amount_paid }}<span class="helptext">Must cover the rate</span></div>
+      <div class="form-group"><label>Payment Method</label>
+        <select name="payment_method"><option value="cash">Cash</option><option value="easypaisa">EasyPaisa</option><option value="jazzcash">JazzCash</option><option value="bank">Bank Transfer</option></select>
+      </div>
+    </div>
+    <div class="form-row"><div class="form-group"><label>Security Deposit ({{ currency }})</label>{{ form.deposit_paid }}<span class="helptext">Optional, refundable</span></div><div class="form-group"><label>Notes</label>{{ form.notes }}</div></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Pay &amp; Assign Locker</button><a href="{% url 'member_detail' member.pk %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

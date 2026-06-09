@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{% if current_gym %}{{ current_gym.theme }}{% else %}light{% endif %}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{% block title %}Gym Swift{% endblock %} &mdash; {% if current_gym %}{{ current_gym.name }}{% else %}Gym Management{% endif %}</title>
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<table class="topbar" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="topbar-logo" style="width:1%;">
+      <a href="{% url 'dashboard' %}" class="logo-link">
+        <span class="logo-text">{% if current_gym %}{{ current_gym.name }}{% else %}&nbsp;{% endif %}</span>
+      </a>
+    </td>
+    <td class="topbar-nav">
+      {% if user.is_authenticated %}
+      <a href="{% url 'dashboard' %}"         class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{% url 'member_list' %}"        class="nav-link {% if 'member' in request.resolver_match.url_name|default:'' %}active{% endif %}">Members</a>
+      <a href="{% url 'attendance_today' %}"   class="nav-link {% if 'attendance' in request.resolver_match.url_name|default:'' %}active{% endif %}">Attendance</a>
+      <a href="{% url 'employee_list' %}"      class="nav-link {% if 'employee' in request.resolver_match.url_name|default:'' %}active{% endif %}">Staff</a>
+      <a href="{% url 'locker_list' %}"        class="nav-link {% if 'locker' in request.resolver_match.url_name|default:'' %}active{% endif %}">Lockers</a>
+      <a href="{% url 'payment_list' %}"       class="nav-link {% if 'payment' in request.resolver_match.url_name|default:'' or 'defaulter' in request.resolver_match.url_name|default:'' %}active{% endif %}">Payments</a>
+      {% if owner_mode %}
+      <a href="{% url 'expense_list' %}"       class="nav-link {% if 'expense' in request.resolver_match.url_name|default:'' %}active{% endif %}">Expenses</a>
+      <a href="{% url 'reports' %}"            class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">Reports</a>
+      {% endif %}
+      <a href="{% url 'whatsapp_generator' %}" class="nav-link {% if 'whatsapp' in request.resolver_match.url_name|default:'' %}active{% endif %}">WhatsApp</a>
+      <a href="{% url 'plan_list' %}" class="nav-link {% if 'plan' in request.resolver_match.url_name|default:'' or 'addon' in request.resolver_match.url_name|default:'' %}active{% endif %}">Plans</a>
+      {% endif %}
+    </td>
+    <td class="topbar-right" style="width:1%;white-space:nowrap;">
+      {% if user.is_authenticated %}
+      {% if owner_mode %}
+        <a href="{% url 'lock_owner' %}" class="user-chip" style="text-decoration:none;" title="Switch to Employee mode">OWNER &#128275; Lock</a>
+      {% else %}
+        <a href="{% url 'elevate' %}" class="user-chip" style="text-decoration:none;" title="Enter Owner mode">EMPLOYEE &#128274; Owner</a>
+      {% endif %}
+      <select class="theme-select" onchange="if(this.value)window.location.href=this.value;" title="Theme">
+        {% for val,label in theme_choices %}
+        <option value="{% url 'set_theme' val %}" {% if current_gym and current_gym.theme == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <span class="user-chip">{{ user.username }}</span>
+      {% if owner_mode %}<a href="{% url 'gym_settings' %}" class="nav-link" title="Settings">Settings</a>{% endif %}
+      <a href="{% url 'logout' %}" class="nav-link">Logout</a>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+<div class="page-wrap">
+{% if messages %}<div class="messages-container">{% for msg in messages %}<div class="msg msg-{{ msg.tags }}">{{ msg }}</div>{% endfor %}</div>{% endif %}
+{% block page_header %}{% endblock %}
+{% block content %}{% endblock %}
+</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,58 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Print &mdash; {{ member.full_name }}{% endblock %}
+{% block content %}
+<div class="header-actions" style="margin-bottom:12px;">
+  <button onclick="window.print()" class="btn btn-primary">Print This Record</button>
+  <a href="{% url 'member_detail' member.pk %}" class="btn">&larr; Back</a>
+</div>
+<div class="form-wrap" style="max-width:780px;" id="print-area">
+  <div style="display:flex;justify-content:space-between;border-bottom:2px solid var(--accent);padding-bottom:10px;margin-bottom:14px;">
+    <div><div style="font-size:22px;font-weight:bold;">{{ gym.name }}</div>
+      <div class="text-small text-muted">{% if gym.address %}{{ gym.address }}{% endif %}{% if gym.phone %} &middot; {{ gym.phone }}{% endif %}</div></div>
+    <div style="text-align:right;"><div class="text-bold">MEMBER RECORD</div><div class="text-small text-muted">Printed {{ today|date:"d M Y" }}</div></div>
+  </div>
+
+  <table style="width:100%;font-size:13px;border-collapse:collapse;">
+    <tr><td style="color:var(--muted);padding:5px 12px 5px 0;width:30%;">Full Name</td><td style="font-weight:bold;font-size:15px;">{{ member.full_name }}</td></tr>
+    <tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Member ID</td><td>#{{ member.pk }}</td></tr>
+    <tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Phone</td><td class="mono">{{ member.phone }}</td></tr>
+    {% if member.email %}<tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Email</td><td>{{ member.email }}</td></tr>{% endif %}
+    <tr><td style="color:var(--muted);padding:5px 12px 5px 0;">CNIC / Form-B</td><td class="mono">{{ member.cnic|default:"-" }}</td></tr>
+    <tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Gender / Blood</td><td>{{ member.get_gender_display }} / {{ member.blood_group }}</td></tr>
+    {% if member.date_of_birth %}<tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Date of Birth</td><td>{{ member.date_of_birth|date:"d M Y" }}</td></tr>{% endif %}
+    {% if member.address %}<tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Address</td><td>{{ member.address }}{% if member.city %}, {{ member.city }}{% endif %}</td></tr>{% endif %}
+    {% if member.occupation %}<tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Occupation</td><td>{{ member.occupation }}</td></tr>{% endif %}
+    <tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Shift</td><td>{{ member.get_shift_display }}</td></tr>
+    <tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Joined</td><td>{{ member.join_date|date:"d M Y" }}</td></tr>
+    {% if member.assigned_trainer %}<tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Trainer</td><td>{{ member.assigned_trainer.full_name }}</td></tr>{% endif %}
+    {% if member.fitness_goal %}<tr><td style="color:var(--muted);padding:5px 12px 5px 0;">Fitness Goal</td><td>{{ member.fitness_goal }}</td></tr>{% endif %}
+    {% if member.medical_conditions %}<tr><td style="color:var(--muted);padding:5px 12px 5px 0;vertical-align:top;">Medical Notes</td><td>{{ member.medical_conditions }}</td></tr>{% endif %}
+  </table>
+
+  <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+    <div class="text-bold" style="margin-bottom:6px;">Emergency Contact</div>
+    <table style="width:100%;font-size:13px;">
+      <tr><td style="color:var(--muted);padding:3px 12px 3px 0;width:30%;">Name</td><td>{{ member.emergency_name|default:"-" }} {% if member.emergency_relation %}({{ member.emergency_relation }}){% endif %}</td></tr>
+      <tr><td style="color:var(--muted);padding:3px 12px 3px 0;">Phone</td><td class="mono">{{ member.emergency_phone|default:"-" }}</td></tr>
+    </table>
+  </div>
+
+  {% if active_mem %}
+  <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+    <div class="text-bold" style="margin-bottom:6px;">Current Membership</div>
+    <table style="width:100%;font-size:13px;">
+      <tr><td style="color:var(--muted);padding:3px 12px 3px 0;width:30%;">Plan</td><td>{{ active_mem.plan_display_name }}</td></tr>
+      <tr><td style="color:var(--muted);padding:3px 12px 3px 0;">Period</td><td>{{ active_mem.start_date|date:"d M Y" }} &ndash; {{ active_mem.end_date|date:"d M Y" }}</td></tr>
+      <tr><td style="color:var(--muted);padding:3px 12px 3px 0;">Amount Paid</td><td class="amount">{{ currency }}{{ active_mem.amount_paid|intcomma }}</td></tr>
+    </table>
+  </div>
+  {% endif %}
+
+  <div style="margin-top:24px;display:flex;justify-content:space-between;font-size:12px;color:var(--muted);">
+    <div>Member signature: ______________________</div>
+    <div>Authorized by: ______________________</div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>window.addEventListener('load',function(){ /* ready to print */ });</script>{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}{{ emp.full_name }}{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>{{ emp.full_name }}</h1>
+  <span class="subtitle">{% if emp.role == 'trainer' %}<span class="tag tag-trainer">Trainer</span>{% else %}<span class="tag">{{ emp.get_role_display }}</span>{% endif %} <span class="badge {% if emp.status == 'active' %}badge-green{% else %}badge-gray{% endif %}">{{ emp.status|upper }}</span></span>
+  <div class="header-actions"><a href="{% url 'employee_edit' emp.pk %}" class="btn btn-sm">Edit</a><a href="{% url 'pay_salary' emp.pk %}" class="btn btn-sm btn-green">Pay Salary</a><a href="{% url 'employee_delete' emp.pk %}" class="btn btn-sm btn-red" onclick="return confirm('Remove employee?')">Delete</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="layout-main-aside">
+<div>
+  <div class="panel mb-8">
+    <div class="panel-head">Employee Details</div>
+    <div class="panel-body">
+      <div class="layout-2col" style="gap:6px;">
+        <table style="font-size:12px;width:100%;">
+          <tr><td style="color:#666;padding:3px 8px 3px 0;width:45%">Phone</td><td class="mono">{{ emp.phone }}</td></tr>
+          {% if emp.email %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Email</td><td>{{ emp.email }}</td></tr>{% endif %}
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">CNIC</td><td class="mono">{{ emp.cnic|default:"—" }}</td></tr>
+          {% if emp.date_of_birth %}<tr><td style="color:#666;padding:3px 8px 3px 0;">DOB</td><td>{{ emp.date_of_birth|date:"d M Y" }}</td></tr>{% endif %}
+          {% if emp.blood_group %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Blood</td><td>{{ emp.blood_group }}</td></tr>{% endif %}
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Joined</td><td>{{ emp.join_date|date:"d M Y" }}</td></tr>
+          {% if emp.address %}<tr><td style="color:#666;padding:3px 8px 3px 0;vertical-align:top;">Address</td><td>{{ emp.address }}</td></tr>{% endif %}
+        </table>
+        <table style="font-size:12px;width:100%;">
+          <tr><td style="color:#666;padding:3px 8px 3px 0;width:50%">Monthly Salary</td><td class="amount text-bold">{{ currency }}{{ emp.monthly_salary|intcomma }}</td></tr>
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Salary Day</td><td>{{ emp.salary_day }} of month</td></tr>
+          {% if emp.per_session_rate %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Session Rate</td><td class="amount">{{ currency }}{{ emp.per_session_rate }}</td></tr>{% endif %}
+          {% if emp.specialization %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Specialization</td><td>{{ emp.specialization }}</td></tr>{% endif %}
+          {% if emp.experience_years %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Experience</td><td>{{ emp.experience_years }} years</td></tr>{% endif %}
+          {% if emp.emergency_name %}<tr><td colspan="2" style="padding-top:6px;font-weight:bold;font-size:11px;color:#FF6600;">Emergency</td></tr><tr><td style="color:#666;padding:3px 8px 3px 0;">Name</td><td>{{ emp.emergency_name }} {% if emp.emergency_relation %}({{ emp.emergency_relation }}){% endif %}</td></tr><tr><td style="color:#666;padding:3px 8px 3px 0;">Phone</td><td class="mono">{{ emp.emergency_phone }}</td></tr>{% endif %}
+        </table>
+      </div>
+      {% if emp.certifications %}<div class="divider"></div><div class="text-small"><b>Certifications:</b> {{ emp.certifications }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="panel mb-8">
+    <div class="panel-head">Salary Payment History <span class="text-small" style="font-weight:normal;">Total paid: {{ currency }}{{ total_paid|intcomma }}</span></div>
+    <div class="panel-body" style="padding:0;">
+      {% if salary_history %}
+      <table class="data-table">
+        <tr><th>Month</th><th class="text-right">Base</th><th class="text-right">Bonus</th><th class="text-right">Deduction</th><th class="text-right">Net</th><th>Method</th><th>Paid On</th></tr>
+        {% for s in salary_history %}
+        <tr><td>{{ s.month|date:"M Y" }}</td><td class="text-right amount">{{ currency }}{{ s.amount|intcomma }}</td><td class="text-right amount text-green">+{{ s.bonus|intcomma }}</td><td class="text-right amount text-red">-{{ s.deduction|intcomma }}</td><td class="text-right amount text-bold">{{ currency }}{{ s.net_amount|intcomma }}</td><td class="text-small">{{ s.get_method_display }}</td><td class="text-small text-muted">{{ s.paid_date|date:"d M Y" }}</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}<div class="no-data">No salary payments yet. <a href="{% url 'pay_salary' emp.pk %}">Pay now →</a></div>{% endif %}
+    </div>
+  </div>
+
+  {% if trainees %}
+  <div class="panel mb-8">
+    <div class="panel-head">Assigned Trainees ({{ trainees.count }})</div>
+    <div class="panel-body" style="padding:0;">
+      <table class="data-table">
+        <tr><th>Member</th><th>Phone</th><th>Shift</th></tr>
+        {% for m in trainees %}<tr><td><a href="{% url 'member_detail' m.pk %}">{{ m.full_name }}</a></td><td class="mono">{{ m.phone }}</td><td>{% if m.shift == 'ladies' %}<span class="tag tag-ladies">Ladies</span>{% else %}<span class="tag tag-gents">Gents</span>{% endif %}</td></tr>{% endfor %}
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+<div>
+  <div class="panel mb-8">
+    <div class="panel-head">Recent Attendance</div>
+    <div class="panel-body">
+      {% for log in attendance_log %}
+      <div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid #f0f0f0;">
+        <span>{{ log.date|date:"d M" }}</span>
+        {% if log.is_present %}<span class="att-status-present">✓ {% if log.check_in_time %}{{ log.check_in_time|time:"H:i" }}{% endif %}</span>{% else %}<span class="att-status-absent">✗ Absent</span>{% endif %}
+      </div>
+      {% empty %}<div class="no-data">No records</div>{% endfor %}
+      <a href="{% url 'employee_attendance' %}" class="btn btn-sm mt-8" style="width:100%;text-align:center;">Mark Today →</a>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

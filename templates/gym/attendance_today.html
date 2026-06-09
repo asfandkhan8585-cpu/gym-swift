@@ -1,0 +1,68 @@
+{% extends 'gym/base.html' %}
+{% block title %}Attendance{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Daily Attendance</h1><span class="subtitle">{{ today|date:"l, j F Y" }}</span>
+  <div class="header-actions">
+    <span class="badge badge-green" style="font-size:12px;padding:3px 8px;">✓ {{ present_count }} Present</span>
+    <span class="badge badge-red" style="font-size:12px;padding:3px 8px;">✗ {{ absent_count }} Absent</span>
+    <span class="badge badge-gray" style="font-size:12px;padding:3px 8px;">— {{ unmarked_count }} Unmarked</span>
+    <a href="{% url 'employee_attendance' %}" class="btn btn-sm">Staff Attendance →</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="filter-bar">
+  <form method="get" style="display:flex;gap:8px;align-items:center;flex:1;">
+    <label>Search:</label>
+    <input type="text" name="q" value="{{ q }}" placeholder="Name or phone..." style="flex:1;max-width:280px;" id="search-input" autocomplete="off">
+    <select name="shift"><option value="">All</option><option value="gents" {% if shift == 'gents' %}selected{% endif %}>Gents</option><option value="ladies" {% if shift == 'ladies' %}selected{% endif %}>Ladies</option></select>
+    <button type="submit" class="btn btn-sm">Find</button>
+    {% if q or shift %}<a href="{% url 'attendance_today' %}" class="btn btn-sm">Clear</a>{% endif %}
+  </form>
+  <span class="text-muted text-small">{{ members_data|length }} shown</span>
+</div>
+<div class="panel">
+  <div class="panel-head">Members — Tap to mark <span style="font-size:11px;font-weight:normal;">Auto-saves instantly</span></div>
+  <div id="attendance-list" class="scroll-box-lg">
+  {% for item in members_data %}
+  <div class="att-row" id="row-{{ item.member.pk }}">
+    <div class="att-name"><a href="{% url 'member_detail' item.member.pk %}">{{ item.member.full_name }}</a></div>
+    <div class="att-phone">{{ item.member.phone }}</div>
+    <div class="att-shift">{% if item.member.shift == 'ladies' %}<span class="tag tag-ladies">Ladies</span>{% elif item.member.shift == 'gents' %}<span class="tag tag-gents">Gents</span>{% else %}<span class="tag tag-open">Open</span>{% endif %}</div>
+    <div class="att-btn-group">
+      <button class="att-btn {% if item.present == True %}present{% endif %}" onclick="markAtt({{ item.member.pk }},true,this)">✓ Present</button>
+      <button class="att-btn {% if item.present == False %}absent{% endif %}" onclick="markAtt({{ item.member.pk }},false,this)">✗ Absent</button>
+    </div>
+    <div id="time-{{ item.member.pk }}" style="width:42px;">{% if item.log and item.log.check_in_time %}<span class="text-muted text-small">{{ item.log.check_in_time|time:"H:i" }}</span>{% endif %}</div>
+    <div id="status-{{ item.member.pk }}" style="width:80px;">{% if item.present == True %}<span class="att-status-present">✓ Present</span>{% elif item.present == False %}<span class="att-status-absent">✗ Absent</span>{% else %}<span class="att-status-unmarked">— Unmarked</span>{% endif %}</div>
+  </div>
+  {% empty %}<div class="no-data">No active members found.</div>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';
+async function markAtt(id,present,btn){
+  const row=document.getElementById('row-'+id);
+  row.querySelectorAll('.att-btn').forEach(b=>b.classList.remove('present','absent'));
+  btn.classList.add(present?'present':'absent');
+  const st=document.getElementById('status-'+id);
+  if(st) st.innerHTML=present?'<span class="att-status-present">✓ Present</span>':'<span class="att-status-absent">✗ Absent</span>';
+  try{
+    const r=await fetch('{% url "mark_attendance" %}',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({member_id:id,is_present:present})});
+    const d=await r.json();
+    if(d.success&&d.check_in_time){const t=document.getElementById('time-'+id);if(t)t.innerHTML='<span class="text-muted text-small">'+d.check_in_time+'</span>';}
+  }catch(e){console.error(e);btn.style.opacity='0.5';}
+}
+document.getElementById('search-input').addEventListener('input',function(){
+  const term=this.value.toLowerCase().trim();
+  document.querySelectorAll('.att-row').forEach(row=>{
+    const n=row.querySelector('.att-name').textContent.toLowerCase();
+    const p=row.querySelector('.att-phone').textContent.toLowerCase();
+    row.style.display=(!term||n.includes(term)||p.includes(term))?'':'none';
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'gym/base.html' %}
+{% block title %}Record Payment{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Record Payment</h1>{% if member %}<span class="subtitle">{{ member.full_name }}</span>{% endif %}
+  <div class="header-actions"><a href="{% if member %}{% url 'member_detail' member.pk %}{% else %}{% url 'payment_list' %}{% endif %}" class="btn btn-sm">← Back</a></div>
+</div>
+{% endblock %}
+{% block content %}
+{% if member and outstanding > 0 %}
+<div class="panel mb-12" style="border:2px solid var(--red);">
+  <div class="panel-head" style="background:var(--red);">Outstanding Balance &mdash; {{ member.full_name }} owes {{ currency }}{{ outstanding|floatformat:2 }}</div>
+  <div class="panel-body" style="padding:0;">
+    <table class="data-table">
+      <tr><th>Date</th><th>For</th><th class="text-right">Due</th><th class="text-right">Paid</th><th class="text-right">Balance</th><th>Status</th></tr>
+      {% for p in pending_rows %}
+      <tr><td class="text-small">{{ p.payment_date|date:"d M Y" }}</td><td class="text-small">{{ p.get_payment_for_display }}</td>
+        <td class="text-right amount">{{ currency }}{{ p.amount_due|floatformat:2 }}</td>
+        <td class="text-right amount">{{ currency }}{{ p.amount_paid|floatformat:2 }}</td>
+        <td class="text-right amount text-red text-bold">{{ currency }}{{ p.balance_due|floatformat:2 }}</td>
+        <td><span class="badge {% if p.status == 'partial' %}badge-yellow{% else %}badge-red{% endif %}">{{ p.status|upper }}</span></td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="panel-body text-small text-muted">The amount fields below are pre-filled with the remaining balance. Adjust if collecting a different amount.</div>
+</div>
+{% endif %}
+<div class="form-wrap">
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><div class="form-group"><label>Member *</label>{{ form.member }}</div><div class="form-group"><label>Payment For</label>{{ form.payment_for }}</div></div>
+    <div class="form-row"><div class="form-group"><label>Amount Due ({{ currency }}) *</label>{{ form.amount_due }}</div><div class="form-group"><label>Amount Paid ({{ currency }}) *</label>{{ form.amount_paid }}</div></div>
+    <div class="form-row thirds"><div class="form-group"><label>Payment Date</label>{{ form.payment_date }}</div><div class="form-group"><label>Due Date</label>{{ form.due_date }}</div><div class="form-group"><label>Method</label>{{ form.method }}</div></div>
+    <div class="form-row"><div class="form-group"><label>Transaction ID</label>{{ form.transaction_id }}<span class="helptext">EasyPaisa/JazzCash TID or bank ref</span></div><div class="form-group"><label>Link to Membership</label>{{ form.membership_record }}</div></div>
+    <div class="form-row full"><div class="form-group"><label>Notes</label>{{ form.notes }}</div></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Save Payment</button><a href="{% url 'payment_list' %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

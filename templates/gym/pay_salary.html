@@ -1,0 +1,16 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Pay Salary{% endblock %}
+{% block page_header %}<div class="page-header"><h1>Pay Salary</h1><span class="subtitle">{{ emp.full_name }} — {{ emp.get_role_display }}</span><div class="header-actions"><a href="{% url 'employee_detail' emp.pk %}" class="btn btn-sm">← Back</a></div></div>{% endblock %}
+{% block content %}
+<div class="form-wrap" style="max-width:560px;">
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><div class="form-group"><label>Employee</label>{{ form.employee }}</div><div class="form-group"><label>Salary Month *</label>{{ form.month }}<span class="helptext">Pick any day in the month</span></div></div>
+    <div class="form-row thirds"><div class="form-group"><label>Base ({{ currency }}) *</label>{{ form.amount }}</div><div class="form-group"><label>Bonus ({{ currency }})</label>{{ form.bonus }}</div><div class="form-group"><label>Deduction ({{ currency }})</label>{{ form.deduction }}</div></div>
+    <div class="form-row thirds"><div class="form-group"><label>Method</label>{{ form.method }}</div><div class="form-group"><label>Paid Date</label>{{ form.paid_date }}</div><div class="form-group"><label>Transaction ID</label>{{ form.transaction_id }}</div></div>
+    <div class="form-row full"><div class="form-group"><label>Notes</label>{{ form.notes }}</div></div>
+    <p class="text-small text-muted">This will also be logged as an expense automatically.</p>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Record Salary Payment</button><a href="{% url 'employee_detail' emp.pk %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

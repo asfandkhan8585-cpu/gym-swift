@@ -1,0 +1,163 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Advanced Reporting{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Advanced Reporting</h1><span class="subtitle">{{ p_start|date:"d M Y" }} &ndash; {{ p_end|date:"d M Y" }}</span>
+  <div class="header-actions">
+    <form method="get" style="display:flex;gap:5px;align-items:center;">
+      <span class="text-small text-muted">Range:</span>
+      <input type="date" name="start" value="{% if custom_range %}{{ start_str }}{% endif %}" required>
+      <input type="date" name="end" value="{% if custom_range %}{{ end_str }}{% endif %}" required>
+      <button type="submit" class="btn btn-sm btn-primary">Search</button>
+    </form>
+    <button onclick="window.print()" class="btn btn-sm">Print</button>
+    <a href="{% url 'reports' %}?start={{ start_str }}&end={{ end_str }}" class="btn btn-sm">&larr; Back to Reports</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+
+<!-- KPI strip -->
+<div class="stat-grid" style="margin-bottom:14px;">
+  <div class="stat-card success"><div class="stat-body"><div class="stat-label">Retention Rate</div><div class="stat-value text-green">{{ retention_rate|floatformat:1 }}%</div><div class="stat-sub">Period (base {{ base_members }})</div></div></div>
+  <div class="stat-card danger"><div class="stat-body"><div class="stat-label">Churn Rate</div><div class="stat-value text-red">{{ churn_rate|floatformat:1 }}%</div><div class="stat-sub">{{ left }} left this period</div></div></div>
+  <div class="stat-card info"><div class="stat-body"><div class="stat-label">Revenue / Active Member</div><div class="stat-value">{{ currency }}{{ arpm|floatformat:0 }}</div><div class="stat-sub">ARPM this period</div></div></div>
+  <div class="stat-card warning"><div class="stat-body"><div class="stat-label">Add-on Attach Rate</div><div class="stat-value">{{ attach_rate|floatformat:0 }}%</div><div class="stat-sub">{{ members_with_addon }} of {{ active_total }} members</div></div></div>
+</div>
+
+<div class="section-label">Member Movement &amp; Retention</div>
+<div class="layout-3col" style="margin-bottom:14px;">
+  <div class="panel">
+    <div class="panel-head">Net Member Movement</div>
+    <div class="panel-body">
+      <table style="width:100%;font-size:13px;">
+        <tr><td style="color:var(--muted);padding:4px 0;">Joined (period)</td><td class="text-right text-green text-bold">+{{ joined }}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0;">Left / churned</td><td class="text-right text-red text-bold">-{{ left }}</td></tr>
+        <tr style="border-top:1px solid var(--border);"><td style="padding:4px 0;font-weight:bold;">Net change</td><td class="text-right text-bold {% if net_change >= 0 %}text-green{% else %}text-red{% endif %}">{% if net_change >= 0 %}+{% endif %}{{ net_change }}</td></tr>
+      </table>
+      <div class="text-small text-muted mt-8">Joined {{ joined }}, left {{ left }} during this period.</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Member Health</div>
+    <div class="panel-body">
+      <table style="width:100%;font-size:13px;">
+        <tr><td style="color:var(--muted);padding:4px 0;">Active members</td><td class="text-right text-green text-bold">{{ active_total }}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0;">Expired members</td><td class="text-right text-bold">{{ expired_total }}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0;">Current defaulters</td><td class="text-right text-red text-bold">{{ defaulter_total }}</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Attendance (period)</div>
+    <div class="panel-body">
+      <table style="width:100%;font-size:13px;">
+        <tr><td style="color:var(--muted);padding:4px 0;">Total check-ins</td><td class="text-right text-bold">{{ total_checkins }}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0;">Unique visitors</td><td class="text-right text-bold">{{ unique_visitors }}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0;">Visits / visitor</td><td class="text-right text-bold">{% if unique_visitors %}{{ total_checkins|floatformat:0 }}{% else %}0{% endif %}{% if unique_visitors %} / {{ unique_visitors }}{% endif %}</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">At-Risk Members <span class="text-small text-muted" style="font-weight:normal;">&mdash; active, no check-in in 14+ days (follow up to prevent churn)</span></div>
+<div class="panel mb-14">
+  <div class="panel-body" style="padding:0;">
+    <div class="scroll-box">
+      <table class="data-table">
+        <thead><tr><th>Member</th><th>Phone</th><th>Last Visit</th><th class="text-right">Days Since</th><th></th></tr></thead>
+        <tbody>
+        {% for r in at_risk %}
+          <tr>
+            <td><a href="{% url 'member_detail' r.id %}"><b>{{ r.name }}</b></a></td>
+            <td class="mono">{{ r.phone }}</td>
+            <td class="text-small">{% if r.last %}{{ r.last|date:"d M Y" }}{% else %}<span class="text-muted">Never</span>{% endif %}</td>
+            <td class="text-right text-red text-bold">{% if r.days != None %}{{ r.days }}d{% else %}&mdash;{% endif %}</td>
+            <td class="text-right"><a href="{% url 'whatsapp_generator' %}?member={{ r.id }}" class="btn btn-xs btn-green">Message</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="no-data">No at-risk members &mdash; everyone has checked in recently.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Revenue &amp; Plans</div>
+<div class="layout-3col" style="margin-bottom:14px;">
+  <div class="panel">
+    <div class="panel-head">Revenue by Payment Method</div>
+    <div class="panel-body" style="padding:0;">
+      <div class="scroll-box-sm">
+        <table class="data-table">
+          <thead><tr><th>Method</th><th class="text-right">Amount</th></tr></thead>
+          <tbody>
+          {% for r in revenue_by_method %}<tr><td>{{ r.method|title }}</td><td class="text-right amount">{{ currency }}{{ r.t|intcomma }}</td></tr>{% empty %}<tr><td colspan="2" class="no-data">No data</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Active Plan Distribution</div>
+    <div class="panel-body">
+      <div class="scroll-box-sm">
+        {% for p in plan_rows %}
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;"><span>{{ p.name }}</span><span class="text-bold">{{ p.count }} ({{ p.pct }}%)</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ p.pct }}%;"></div></div>
+        </div>
+        {% empty %}<div class="no-data">No active memberships</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Top Members (Paid)</div>
+    <div class="panel-body" style="padding:0;">
+      <div class="scroll-box-sm">
+        <table class="data-table">
+          <thead><tr><th>Member</th><th class="text-right">Paid</th></tr></thead>
+          <tbody>
+          {% for t in top_spenders %}<tr><td><a href="{% url 'member_detail' t.member__id %}">{{ t.member__full_name }}</a></td><td class="text-right amount">{{ currency }}{{ t.total|intcomma }}</td></tr>{% empty %}<tr><td colspan="2" class="no-data">No payments</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Trends &amp; Expenses</div>
+<div class="layout-2col">
+  <div class="panel">
+    <div class="panel-head">6-Month Revenue vs Expense Trend</div>
+    <div class="panel-body">
+      <div class="scroll-box">
+        {% for t in trend %}
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;"><span class="text-bold">{{ t.label }}</span><span>Profit: <b class="{% if t.profit >= 0 %}text-green{% else %}text-red{% endif %}">{{ currency }}{{ t.profit|intcomma }}</b></span></div>
+          <div class="bar-track" title="Revenue {{ currency }}{{ t.revenue|intcomma }}"><div class="bar-fill" style="width:{{ t.rev_pct }}%;background:var(--green);"></div></div>
+          <div class="bar-track" style="margin-top:2px;" title="Expense {{ currency }}{{ t.expense|intcomma }}"><div class="bar-fill" style="width:{{ t.exp_pct }}%;background:var(--red);"></div></div>
+        </div>
+        {% endfor %}
+        <div class="text-small text-muted">Green = revenue, red = expense.</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Expense Breakdown</div>
+    <div class="panel-body">
+      <div class="scroll-box">
+        {% for e in exp_by_cat %}
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;"><span>{{ e.category|title }}</span><span class="text-bold">{{ currency }}{{ e.t|intcomma }}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{% widthratio e.t exp_max 100 %}%;background:var(--red);"></div></div>
+        </div>
+        {% empty %}<div class="no-data">No expenses this period</div>{% endfor %}
+        {% if salary_expense %}<div class="text-small text-muted mt-8">Includes salaries: {{ currency }}{{ salary_expense|intcomma }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

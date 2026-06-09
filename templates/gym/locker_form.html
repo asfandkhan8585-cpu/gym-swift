@@ -1,0 +1,13 @@
+{% extends 'gym/base.html' %}
+{% block title %}{{ action }} Locker{% endblock %}
+{% block page_header %}<div class="page-header"><h1>{{ action }} Locker</h1><div class="header-actions"><a href="{% url 'locker_list' %}" class="btn btn-sm">← Back</a></div></div>{% endblock %}
+{% block content %}
+<div class="form-wrap" style="max-width:480px;">
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><div class="form-group"><label>Locker Number *</label>{{ form.locker_number }}</div><div class="form-group"><label>Zone</label>{{ form.zone }}</div></div>
+    <div class="form-row"><div class="form-group"><label>Monthly Rate ({{ currency }})</label>{{ form.monthly_rate }}<span class="helptext">0 if included in plan</span></div><div class="form-group"><label>Status</label>{{ form.status }}</div></div>
+    <div class="form-row full"><div class="form-group"><label>Notes</label>{{ form.notes }}</div></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Save Locker</button><a href="{% url 'locker_list' %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

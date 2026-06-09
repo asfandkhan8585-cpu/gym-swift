@@ -1,0 +1,208 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}{{ member.full_name }}{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>{{ member.full_name }}</h1>
+  <span class="subtitle">
+    <span class="badge {% if member.status == 'active' %}badge-green{% elif member.status == 'freeze' %}badge-blue{% else %}badge-red{% endif %}">{{ member.status|upper }}</span>
+    &nbsp;{% if member.shift == 'ladies' %}<span class="tag tag-ladies">Ladies</span>{% elif member.shift == 'gents' %}<span class="tag tag-gents">Gents</span>{% else %}<span class="tag tag-open">Open</span>{% endif %}
+    {% if member.assigned_trainer %}&nbsp;<span class="tag tag-trainer">{{ member.assigned_trainer.full_name }}</span>{% endif %}
+  </span>
+  <div class="header-actions">
+    <a href="{% url 'member_edit' member.pk %}" class="btn btn-sm">Edit</a>
+    <a href="{% url 'member_print' member.pk %}" class="btn btn-sm">Print Record</a>
+    {% if member.status == 'left' %}<a href="{% url 'member_restore' member.pk %}" class="btn btn-sm btn-green">Restore Member</a>{% endif %}
+    <a href="{% url 'assign_membership' member.pk %}" class="btn btn-sm btn-green">Assign Plan</a>
+    <a href="{% url 'assign_addon' member.pk %}" class="btn btn-sm">+ Add-On</a>
+    <a href="{% url 'payment_add_member' member.pk %}" class="btn btn-sm btn-blue">Record Payment</a>
+    <a href="{% url 'attendance_history' member.pk %}" class="btn btn-sm">Attendance Log</a>
+    <a href="{% url 'whatsapp_generator' %}?member={{ member.pk }}" class="btn btn-sm" style="background:#25d366;border-color:#128c7e;color:#fff;">WhatsApp</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="layout-main-aside">
+<div>
+
+  <!-- Personal Info -->
+  <div class="panel mb-8">
+    <div class="panel-head">Personal Information <a href="{% url 'member_edit' member.pk %}">Edit →</a></div>
+    <div class="panel-body">
+      <div class="layout-2col" style="gap:6px;">
+        <table style="font-size:12px;border-collapse:collapse;width:100%;">
+          <tr><td style="color:#666;padding:3px 8px 3px 0;width:45%">Full Name</td><td style="font-weight:bold;">{{ member.full_name }}</td></tr>
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Phone</td><td class="mono">{{ member.phone }}</td></tr>
+          {% if member.email %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Email</td><td>{{ member.email }}</td></tr>{% endif %}
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">CNIC/Form-B</td><td class="mono">{{ member.cnic|default:"—" }}</td></tr>
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Gender</td><td>{{ member.get_gender_display }}</td></tr>
+          {% if member.date_of_birth %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Date of Birth</td><td>{{ member.date_of_birth|date:"d M Y" }}</td></tr>{% endif %}
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Blood Group</td><td>{{ member.blood_group }}</td></tr>
+          {% if member.occupation %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Occupation</td><td>{{ member.occupation }}</td></tr>{% endif %}
+          {% if member.city %}<tr><td style="color:#666;padding:3px 8px 3px 0;">City</td><td>{{ member.city }}</td></tr>{% endif %}
+          {% if member.address %}<tr><td style="color:#666;padding:3px 8px 3px 0;vertical-align:top;">Address</td><td>{{ member.address }}</td></tr>{% endif %}
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Joined</td><td>{{ member.join_date|date:"d M Y" }}</td></tr>
+        </table>
+        <table style="font-size:12px;border-collapse:collapse;width:100%;">
+          <tr><td style="color:#666;padding:3px 8px 3px 0;width:45%">Shift</td><td>{{ member.get_shift_display }}</td></tr>
+          {% if member.assigned_trainer %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Trainer</td><td><a href="{% url 'employee_detail' member.assigned_trainer.pk %}">{{ member.assigned_trainer.full_name }}</a></td></tr>{% endif %}
+          {% if member.fitness_goal %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Goal</td><td>{{ member.fitness_goal }}</td></tr>{% endif %}
+          {% if member.medical_conditions %}<tr><td style="color:#666;padding:3px 8px 3px 0;vertical-align:top;">Medical</td><td class="text-red">{{ member.medical_conditions }}</td></tr>{% endif %}
+          {% if member.referred_by %}<tr><td style="color:#666;padding:3px 8px 3px 0;">Referred By</td><td><a href="{% url 'member_detail' member.referred_by.pk %}">{{ member.referred_by.full_name }}</a></td></tr>{% endif %}
+          {% if member.emergency_name %}
+          <tr><td colspan="2" style="padding-top:6px;font-weight:bold;font-size:11px;color:#FF6600;">Emergency Contact</td></tr>
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Name</td><td>{{ member.emergency_name }} {% if member.emergency_relation %}({{ member.emergency_relation }}){% endif %}</td></tr>
+          <tr><td style="color:#666;padding:3px 8px 3px 0;">Phone</td><td class="mono">{{ member.emergency_phone }}</td></tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memberships -->
+  <div class="panel mb-8">
+    <div class="panel-head">Membership History <a href="{% url 'assign_membership' member.pk %}">+ Assign →</a></div>
+    <div class="panel-body" style="padding:0;">
+      {% if memberships %}
+      <table class="data-table">
+        <tr><th>Plan</th><th>Start</th><th>End</th><th>Services</th><th class="text-right">Paid</th><th>Status</th></tr>
+        {% for m in memberships %}
+        <tr {% if m.is_active %}style="background:#f9fff9;"{% endif %}>
+          <td><b>{{ m.plan_display_name }}</b></td>
+          <td class="text-small">{{ m.start_date|date:"d M Y" }}</td>
+          <td class="text-small">{{ m.end_date|date:"d M Y" }}
+            {% if m.is_active %}<br><span class="text-small text-green">{{ m.days_remaining }}d left</span>{% endif %}</td>
+          <td class="text-small">
+            {% if m.uses_cardio_equipment %}<span class="tag">Cardio</span>{% endif %}
+            {% if m.has_personal_trainer %}<span class="tag tag-trainer">PT</span>{% endif %}
+            {% if m.has_locker %}<span class="tag">Locker</span>{% endif %}
+            {% if m.has_steam_room %}<span class="tag">Steam</span>{% endif %}
+          </td>
+          <td class="text-right amount">{{ currency }}{{ m.amount_paid|intcomma }}</td>
+          <td><span class="badge {% if m.is_active %}badge-green{% elif m.status == 'cancelled' %}badge-gray{% else %}badge-red{% endif %}">
+            {% if m.is_active %}ACTIVE{% else %}{{ m.status|upper }}{% endif %}
+          </span></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}<div class="no-data">No memberships. <a href="{% url 'assign_membership' member.pk %}">Assign plan →</a></div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Active Add-Ons -->
+  {% if addons %}
+  <div class="panel mb-8">
+    <div class="panel-head">Active Add-Ons <a href="{% url 'assign_addon' member.pk %}">+ Add →</a></div>
+    <div class="panel-body" style="padding:0;">
+      <table class="data-table">
+        <tr><th>Add-On</th><th>Type</th><th>Qty</th><th class="text-right">Rate</th><th>Billing</th><th>Since</th></tr>
+        {% for ao in addons %}
+        <tr>
+          <td><b>{{ ao.addon.name }}</b></td>
+          <td>{{ ao.addon.get_addon_type_display }}</td>
+          <td class="text-center">{{ ao.quantity }}</td>
+          <td class="text-right amount">{{ currency }}{{ ao.rate }}</td>
+          <td class="text-small">{{ ao.addon.get_billing_cycle_display }}</td>
+          <td class="text-small text-muted">{{ ao.start_date|date:"d M Y" }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Locker -->
+  <div class="panel mb-8">
+    <div class="panel-head">Locker Assignment
+      {% if not active_locker %}<a href="{% url 'assign_locker' member.pk %}">Assign Locker →</a>
+      {% else %}<a href="{% url 'release_locker' member.pk %}" onclick="return confirm('Release locker?')">Release Locker</a>{% endif %}
+    </div>
+    <div class="panel-body">
+      {% if active_locker %}
+      <table style="font-size:12px;border-collapse:collapse;">
+        <tr><td style="color:#666;padding:2px 10px 2px 0;">Locker #</td><td><b>{{ active_locker.locker.locker_number }}</b></td></tr>
+        <tr><td style="color:#666;padding:2px 10px 2px 0;">Zone</td><td>{{ active_locker.locker.get_zone_display }}</td></tr>
+        <tr><td style="color:#666;padding:2px 10px 2px 0;">Key #</td><td class="mono">{{ active_locker.key_number|default:"—" }}</td></tr>
+        <tr><td style="color:#666;padding:2px 10px 2px 0;">Monthly Rate</td><td class="amount">{{ currency }}{{ active_locker.monthly_rate }}</td></tr>
+        <tr><td style="color:#666;padding:2px 10px 2px 0;">Deposit Paid</td><td class="amount">{{ currency }}{{ active_locker.deposit_paid }}</td></tr>
+        <tr><td style="color:#666;padding:2px 10px 2px 0;">Assigned</td><td>{{ active_locker.assigned_date|date:"d M Y" }}</td></tr>
+        {% if active_locker.expiry_date %}<tr><td style="color:#666;padding:2px 10px 2px 0;">Expiry</td><td class="text-red">{{ active_locker.expiry_date|date:"d M Y" }}</td></tr>{% endif %}
+      </table>
+      {% else %}<div class="no-data">No locker assigned. <a href="{% url 'assign_locker' member.pk %}">Assign one →</a></div>{% endif %}
+    </div>
+  </div>
+
+  <!-- Payments -->
+  <div class="panel mb-8">
+    <div class="panel-head">Payments <a href="{% url 'payment_add_member' member.pk %}">+ Record →</a></div>
+    <div class="panel-body" style="padding:0;">
+      {% if payments %}
+      <table class="data-table">
+        <tr><th>Date</th><th>For</th><th class="text-right">Due</th><th class="text-right">Paid</th><th>Method</th><th>TID</th><th>Status</th></tr>
+        {% for p in payments %}
+        <tr>
+          <td class="text-small">{{ p.payment_date|date:"d M Y" }}</td>
+          <td class="text-small">{{ p.get_payment_for_display }}</td>
+          <td class="text-right amount">{{ currency }}{{ p.amount_due|intcomma }}</td>
+          <td class="text-right amount {% if p.amount_paid >= p.amount_due %}text-green{% else %}text-red{% endif %}">{{ currency }}{{ p.amount_paid|intcomma }}</td>
+          <td>{% if p.method == 'cash' %}<span class="badge badge-gray">Cash</span>{% elif p.method == 'easypaisa' %}<span class="badge badge-green">EasyPaisa</span>{% elif p.method == 'jazzcash' %}<span class="badge badge-orange">JazzCash</span>{% elif p.method == 'bank' %}<span class="badge badge-blue">Bank</span>{% else %}<span class="badge badge-gray">{{ p.method }}</span>{% endif %}</td>
+          <td class="mono text-small text-muted">{{ p.transaction_id|default:"—" }}</td>
+          <td><span class="badge {% if p.status == 'paid' %}badge-green{% elif p.status == 'partial' %}badge-yellow{% else %}badge-red{% endif %}">{{ p.status|upper }}</span></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}<div class="no-data">No payments.</div>{% endif %}
+    </div>
+  </div>
+
+</div>
+<div>
+  <!-- Status Card -->
+  <div class="panel mb-8">
+    <div class="panel-head">Membership Status</div>
+    <div class="panel-body" style="text-align:center;padding:14px;">
+      {% if active_mem %}
+        <div style="font-size:26px;font-weight:bold;color:#2d7a2d;">ACTIVE</div>
+        <div style="font-size:12px;margin-top:4px;">{{ active_mem.plan_display_name }}</div>
+        <div class="divider"></div>
+        <div class="text-small text-muted">Expires</div>
+        <div style="font-size:15px;font-weight:bold;{% if active_mem.days_remaining <= 7 %}color:#cc0000;{% endif %}">{{ active_mem.end_date|date:"d F Y" }}</div>
+        <div class="text-small {% if active_mem.days_remaining <= 7 %}text-red{% else %}text-muted{% endif %}">{{ active_mem.days_remaining }} day{{ active_mem.days_remaining|pluralize }}</div>
+        <div class="divider"></div>
+        <div style="font-size:11px;text-align:left;">
+          {% if active_mem.uses_cardio_equipment %}<div>✓ <span style="color:#2d7a2d;">Cardio Equipment</span></div>{% endif %}
+          {% if active_mem.uses_free_weights %}<div>✓ <span style="color:#2d7a2d;">Free Weights</span></div>{% endif %}
+          {% if active_mem.has_personal_trainer %}<div>✓ <span style="color:#2d7a2d;">Personal Trainer{% if active_mem.trainer %}: {{ active_mem.trainer.full_name }}{% endif %}</span></div>{% endif %}
+          {% if active_mem.has_locker %}<div>✓ <span style="color:#2d7a2d;">Locker</span></div>{% endif %}
+          {% if active_mem.has_steam_room %}<div>✓ <span style="color:#2d7a2d;">Steam Room</span></div>{% endif %}
+        </div>
+      {% else %}
+        <div style="font-size:18px;font-weight:bold;color:#cc0000;">NO ACTIVE PLAN</div>
+        <div class="text-small text-muted" style="margin-top:6px;">Expired or not assigned.</div>
+        <div style="margin-top:10px;"><a href="{% url 'assign_membership' member.pk %}" class="btn btn-green btn-sm">Assign Plan</a></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Attendance -->
+  <div class="panel mb-8">
+    <div class="panel-head">Attendance <a href="{% url 'attendance_history' member.pk %}">History →</a></div>
+    <div class="panel-body" style="text-align:center;">
+      <div style="font-size:28px;font-weight:bold;color:#2d7a2d;">{{ present_days }}</div>
+      <div class="text-small text-muted">Total days present</div>
+      <div style="margin-top:8px;">
+        {% for log in attendance %}{% if log.is_present %}<span style="display:inline-block;width:10px;height:10px;background:#2d7a2d;margin:1px;border-radius:1px;" title="{{ log.date }}"></span>{% else %}<span style="display:inline-block;width:10px;height:10px;background:#fdd;border:1px solid #ecc;margin:1px;border-radius:1px;" title="{{ log.date }}"></span>{% endif %}{% endfor %}
+      </div>
+      <div class="text-small text-muted mt-8">Last 31 days</div>
+    </div>
+  </div>
+
+  <!-- Meta -->
+  <div style="font-size:11px;color:#888;margin-top:8px;">
+    Registered: {{ member.created_at|date:"d M Y" }}{% if member.registered_by %} by {{ member.registered_by.username }}{% endif %}<br>
+    Updated: {{ member.updated_at|date:"d M Y H:i" }}<br>
+    <a href="{% url 'member_delete' member.pk %}" class="text-red" style="margin-top:6px;display:inline-block;">Remove / Archive Member</a>
+  </div>
+</div>
+</div>
+{% endblock %}

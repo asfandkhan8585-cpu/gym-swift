@@ -1,0 +1,26 @@
+{% extends 'gym/base.html' %}
+{% load humanize %}
+{% block title %}Add-Ons{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Add-On Services</h1>
+  <div class="header-actions"><a href="{% url 'addon_add' %}" class="btn btn-primary btn-sm">+ Add Service</a><a href="{% url 'plan_list' %}" class="btn btn-sm">← Plans</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<table class="data-table">
+  <thead><tr><th>Name</th><th>Type</th><th class="text-right">Price</th><th>Billing</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+  {% for a in addons %}
+  <tr>
+    <td><b>{{ a.name }}</b>{% if a.description %}<br><span class="text-small text-muted">{{ a.description|truncatechars:40 }}</span>{% endif %}</td>
+    <td>{{ a.get_addon_type_display }}</td>
+    <td class="text-right amount text-bold">{{ currency }}{{ a.price|intcomma }}</td>
+    <td>{{ a.get_billing_cycle_display }}</td>
+    <td>{% if a.is_active %}<span class="badge badge-green">YES</span>{% else %}<span class="badge badge-gray">NO</span>{% endif %}</td>
+    <td><a href="{% url 'addon_edit' a.pk %}" class="btn btn-xs">Edit</a> <a href="{% url 'addon_delete' a.pk %}" class="btn btn-xs btn-red">Delete</a></td>
+  </tr>
+  {% empty %}<tr><td colspan="6" class="no-data">No add-ons yet. <a href="{% url 'addon_add' %}">Add one →</a></td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

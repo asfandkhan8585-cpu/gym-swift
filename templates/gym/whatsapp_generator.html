@@ -1,0 +1,55 @@
+{% extends 'gym/base.html' %}
+{% block title %}WhatsApp{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>WhatsApp Message Generator</h1><span class="subtitle">Copy-paste reminders (since SMS/email are rarely checked)</span>
+  <div class="header-actions"><a href="{% url 'whatsapp_templates' %}" class="btn btn-sm">Manage Templates</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="layout-2col">
+<div class="form-wrap">
+  <form method="post">{% csrf_token %}
+    <div class="form-group" style="margin-bottom:10px;"><label>Select Member *</label>
+      <select name="member_id" required>
+        <option value="">— Choose member —</option>
+        {% for m in members %}<option value="{{ m.pk }}" {% if sel_member and sel_member.pk == m.pk %}selected{% endif %}>{{ m.full_name }} ({{ m.phone }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>Template</label>
+      <select name="template_id">
+        <option value="">— Choose template —</option>
+        {% for t in templates %}<option value="{{ t.pk }}">{{ t.name }} ({{ t.get_template_type_display }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>Or Custom Message</label><textarea name="custom_text" rows="4" placeholder="Type a custom message..."></textarea></div>
+    <button type="submit" class="btn btn-primary">Generate Message</button>
+  </form>
+</div>
+<div>
+  {% if rendered %}
+  <div class="panel">
+    <div class="panel-head" style="background:#25d366;">Generated Message — {{ sel_member.full_name }}</div>
+    <div class="panel-body">
+      <div class="wa-box" id="wa-text">{{ rendered }}</div>
+      <button class="wa-copy-btn" onclick="copyWA()">📋 Copy Message</button>
+      {% if wa_link %}<a href="{{ wa_link }}" target="_blank" class="wa-open-btn">📱 Open in WhatsApp</a>{% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="panel">
+    <div class="panel-head">Preview</div>
+    <div class="panel-body"><div class="no-data">Select a member and template, then click Generate.<br><br>Placeholders auto-fill: member name, amount due, due date, gym name & phone, expiry date, plan name.</div></div>
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function copyWA(){
+  const text=document.getElementById('wa-text').textContent.trim();
+  navigator.clipboard.writeText(text).then(()=>{const b=document.querySelector('.wa-copy-btn');b.textContent='Copied ✓';setTimeout(()=>b.textContent='📋 Copy Message',2000);});
+}
+</script>
+{% endblock %}

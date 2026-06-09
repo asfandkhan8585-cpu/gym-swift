@@ -1,0 +1,22 @@
+{% extends 'gym/base.html' %}
+{% block title %}WhatsApp Templates{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>WhatsApp Templates</h1>
+  <div class="header-actions"><a href="{% url 'whatsapp_template_add' %}" class="btn btn-primary btn-sm">+ New Template</a><a href="{% url 'whatsapp_generator' %}" class="btn btn-sm">← Generator</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="text-small text-muted mb-12">Placeholders you can use: <code>{member_name}</code> <code>{amount_due}</code> <code>{due_date}</code> <code>{gym_name}</code> <code>{gym_phone}</code> <code>{expiry_date}</code> <code>{plan_name}</code></div>
+<div class="layout-2col">
+{% for t in templates %}
+<div class="panel mb-8">
+  <div class="panel-head">{{ t.name }} <span style="float:right;"><a href="{% url 'whatsapp_template_add' %}?edit={{ t.pk }}">Edit</a> · <a href="{% url 'whatsapp_template_delete' t.pk %}">Delete</a></span></div>
+  <div class="panel-body">
+    <div style="margin-bottom:6px;"><span class="badge badge-orange">{{ t.get_template_type_display }}</span>{% if t.is_default %} <span class="badge badge-green">DEFAULT</span>{% endif %}</div>
+    <div class="wa-box">{{ t.body }}</div>
+  </div>
+</div>
+{% empty %}<div class="no-data">No templates. <a href="{% url 'whatsapp_template_add' %}">Create one →</a></div>{% endfor %}
+</div>
+{% endblock %}

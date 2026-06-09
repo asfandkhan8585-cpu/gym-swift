@@ -1,0 +1,42 @@
+{% extends 'gym/base.html' %}
+{% block title %}Assign Add-On{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Assign Add-On Service</h1>
+  <span class="subtitle">{{ member.full_name }}</span>
+  <div class="header-actions"><a href="{% url 'member_detail' member.pk %}" class="btn btn-sm">← Back</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="layout-2col">
+<div class="form-wrap">
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><div class="form-group"><label>Add-On Service *</label>{{ form.addon }}</div><div class="form-group"><label>Quantity</label>{{ form.quantity }}<span class="helptext">e.g. sessions/month</span></div></div>
+    <div class="form-row"><div class="form-group"><label>Rate ({{ currency }}) *</label>{{ form.rate }}</div><div class="form-group"><label>Start Date</label>{{ form.start_date }}</div></div>
+    <div class="form-row"><div class="form-group"><label>End Date (optional)</label>{{ form.end_date }}</div>
+    <div class="form-group"><label>Payment Method</label>
+      <select name="payment_method"><option value="cash">Cash</option><option value="easypaisa">EasyPaisa</option><option value="jazzcash">JazzCash</option><option value="bank">Bank Transfer</option></select>
+    </div></div>
+    <div class="form-row full"><div class="form-group"><label>Notes</label>{{ form.notes }}</div></div>
+    <div class="form-row full">
+      <div class="form-check"><input type="checkbox" name="paid_now" id="paid_now" checked><label for="paid_now">Paid now (create payment record)</label></div>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Assign Add-On</button><a href="{% url 'member_detail' member.pk %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+<div class="panel">
+  <div class="panel-head">Available Add-Ons <a href="{% url 'addon_add' %}">+ New →</a></div>
+  <div class="panel-body" style="padding:0;">
+    <table class="data-table">
+      <tr><th>Name</th><th>Type</th><th class="text-right">Price</th><th>Billing</th></tr>
+      {% for a in addons %}
+      <tr style="cursor:pointer;" onclick="document.getElementById('id_addon').value={{ a.pk }};document.getElementById('id_rate').value={{ a.price }};">
+        <td><b>{{ a.name }}</b></td><td class="text-small">{{ a.get_addon_type_display }}</td>
+        <td class="text-right amount">{{ currency }}{{ a.price }}</td><td class="text-small">{{ a.get_billing_cycle_display }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="4" class="no-data">No add-ons. <a href="{% url 'addon_add' %}">Create one →</a></td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}

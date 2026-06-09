@@ -1,0 +1,35 @@
+{% extends 'gym/base.html' %}
+{% block title %}Remove {{ type }}{% endblock %}
+{% block content %}
+<div class="form-wrap" style="max-width:520px;">
+{% if type == 'Member' %}
+  <h1 style="font-size:18px;margin-bottom:8px;">Remove Member</h1>
+  <p style="font-size:13px;margin-bottom:14px;">Move <b>{{ object }}</b> to <b>Former Members</b>. Their full record is <u>kept</u> for your history and can be restored anytime. Any locker they hold will be freed.</p>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="archive">
+    <div class="form-group" style="margin-bottom:12px;"><label>Reason for leaving (optional)</label><input type="text" name="left_reason" placeholder="e.g. Moved city, stopped coming, shifted gym"></div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Archive as Former Member</button>
+      <a href="{% url 'member_detail' object.pk %}" class="btn">Cancel</a>
+    </div>
+  </form>
+  {% if can_hard_delete %}
+  <div class="divider"></div>
+  <p class="text-small text-muted" style="margin-bottom:8px;">Owner only: permanently erase this member and all their records. This cannot be undone.</p>
+  <form method="post" onsubmit="return confirm('Permanently erase {{ object }} and ALL their records? This cannot be undone.');">{% csrf_token %}
+    <input type="hidden" name="action" value="hard_delete">
+    <button type="submit" class="btn btn-red btn-sm">Permanently Delete</button>
+  </form>
+  {% endif %}
+{% else %}
+  <h1 style="font-size:16px;color:var(--red);margin-bottom:10px;">Remove {{ type }}?</h1>
+  <p style="font-size:13px;margin-bottom:14px;">Remove <b>{{ object }}</b>? If it has past history it will be safely archived (hidden from new use) so your records stay intact; otherwise it's permanently deleted.</p>
+  <form method="post">{% csrf_token %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-red">Remove {{ type }}</button>
+      <a href="javascript:history.back()" class="btn">Cancel</a>
+    </div>
+  </form>
+{% endif %}
+</div>
+{% endblock %}

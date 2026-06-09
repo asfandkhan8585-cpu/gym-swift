@@ -1,0 +1,14 @@
+{% extends 'gym/base.html' %}
+{% block title %}{{ action }} Add-On{% endblock %}
+{% block page_header %}<div class="page-header"><h1>{{ action }} Add-On Service</h1><div class="header-actions"><a href="{% url 'addon_list' %}" class="btn btn-sm">← Back</a></div></div>{% endblock %}
+{% block content %}
+<div class="form-wrap" style="max-width:480px;">
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><div class="form-group"><label>Name *</label>{{ form.name }}</div><div class="form-group"><label>Type</label>{{ form.addon_type }}</div></div>
+    <div class="form-row"><div class="form-group"><label>Price ({{ currency }}) *</label>{{ form.price }}</div><div class="form-group"><label>Billing Cycle</label>{{ form.billing_cycle }}</div></div>
+    <div class="form-row full"><div class="form-group"><label>Description</label>{{ form.description }}</div></div>
+    <div class="form-check">{{ form.is_active }}<label>Active</label></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Save Add-On</button><a href="{% url 'addon_list' %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

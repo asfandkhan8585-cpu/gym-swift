@@ -1,0 +1,34 @@
+{% extends 'gym/base.html' %}
+{% block title %}Former Members{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Former Members</h1><span class="subtitle">{{ total }} archived record{{ total|pluralize }} &mdash; data retained</span>
+  <div class="header-actions"><a href="{% url 'member_list' %}" class="btn btn-sm">&larr; Active Members</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="filter-bar">
+  <form method="get" style="display:flex;gap:8px;align-items:center;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Name, phone, CNIC..." style="width:240px;">
+    <button type="submit" class="btn btn-sm">Search</button>
+    {% if q %}<a href="{% url 'former_members' %}" class="btn btn-sm">Clear</a>{% endif %}
+  </form>
+</div>
+<table class="data-table">
+  <thead><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Joined</th><th>Left On</th><th>Reason</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for m in page_obj %}
+  <tr>
+    <td><a href="{% url 'member_detail' m.pk %}"><b>{{ m.full_name }}</b></a></td>
+    <td class="mono">{{ m.phone }}</td>
+    <td class="mono text-small text-muted">{{ m.cnic|default:"-" }}</td>
+    <td class="text-small">{{ m.join_date|date:"d M Y" }}</td>
+    <td class="text-small text-red">{{ m.left_date|date:"d M Y"|default:"-" }}</td>
+    <td class="text-small text-muted">{{ m.left_reason|default:"-"|truncatechars:40 }}</td>
+    <td><a href="{% url 'member_detail' m.pk %}" class="btn btn-xs">View</a><a href="{% url 'member_restore' m.pk %}" class="btn btn-xs btn-green">Restore</a></td>
+  </tr>
+  {% empty %}<tr><td colspan="7" class="no-data">No former members. When you remove a member they are archived here.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% if page_obj.has_other_pages %}<div class="pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q }}">&lsaquo; Prev</a>{% endif %}<span class="current">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q }}">Next &rsaquo;</a>{% endif %}</div>{% endif %}
+{% endblock %}

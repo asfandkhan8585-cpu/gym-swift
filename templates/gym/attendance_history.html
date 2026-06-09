@@ -1,0 +1,32 @@
+{% extends 'gym/base.html' %}
+{% block title %}Attendance — {{ member.full_name }}{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Attendance History</h1><span class="subtitle">{{ member.full_name }} ({{ member.phone }})</span>
+  <div class="header-actions"><a href="{% url 'member_detail' member.pk %}" class="btn btn-sm">← Back</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+  <div class="stat-card success"><div class="stat-label">Days Present</div><div class="stat-value text-green">{{ total_present }}</div><div class="stat-sub">Last 90 days</div></div>
+  <div class="stat-card danger"><div class="stat-label">Days Absent</div><div class="stat-value text-red">{{ total_absent }}</div><div class="stat-sub">Marked absent</div></div>
+  <div class="stat-card"><div class="stat-label">Period</div><div class="stat-value" style="font-size:14px;">{{ start_date|date:"d M" }} – {{ end_date|date:"d M" }}</div><div class="stat-sub">90-day window</div></div>
+</div>
+<div class="panel">
+  <div class="panel-head">Daily Log</div>
+  <div class="panel-body" style="padding:0;">
+    <table class="data-table">
+      <tr><th>Date</th><th>Day</th><th>Status</th><th>Check-in</th><th>Check-out</th><th>Marked By</th></tr>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.date|date:"d M Y" }}</td><td class="text-small text-muted">{{ log.date|date:"l" }}</td>
+        <td>{% if log.is_present %}<span class="badge badge-green">PRESENT</span>{% else %}<span class="badge badge-red">ABSENT</span>{% endif %}</td>
+        <td class="mono text-small">{% if log.check_in_time %}{{ log.check_in_time|time:"H:i" }}{% else %}—{% endif %}</td>
+        <td class="mono text-small">{% if log.check_out_time %}{{ log.check_out_time|time:"H:i" }}{% else %}—{% endif %}</td>
+        <td class="text-small text-muted">{% if log.marked_by %}{{ log.marked_by.username }}{% else %}—{% endif %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="no-data">No attendance records in this period.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

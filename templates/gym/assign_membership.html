@@ -1,0 +1,102 @@
+{% extends 'gym/base.html' %}
+{% block title %}Assign Plan — {{ member.full_name }}{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Assign / Renew Membership</h1>
+  <span class="subtitle">{{ member.full_name }} ({{ member.phone }})</span>
+  <div class="header-actions"><a href="{% url 'member_detail' member.pk %}" class="btn btn-sm">← Back</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="layout-2col">
+<div class="form-wrap">
+  <form method="post" id="membership-form">{% csrf_token %}
+    <div class="form-section">Plan Selection</div>
+    <div class="form-row full">
+      <div class="form-group"><label>Standard Plan</label>{{ form.plan }}<span class="helptext">Leave blank to create a custom plan below</span></div>
+    </div>
+    <div class="form-row thirds">
+      <div class="form-group"><label>Custom Plan Name</label>{{ form.custom_plan_name }}<span class="helptext">If no standard plan selected</span></div>
+      <div class="form-group"><label>Custom Days</label>{{ form.custom_duration_days }}</div>
+      <div class="form-group"><label>Custom Price ({{ currency }})</label>{{ form.custom_price }}</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Start Date *</label>{{ form.start_date }}</div>
+      <div class="form-group"><label>Amount Paid ({{ currency }}) *</label>{{ form.amount_paid }}<span class="helptext" id="plan-price-hint"></span></div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label>Payment Method</label>
+        <select name="payment_method">
+          <option value="cash">Cash</option>
+          <option value="easypaisa">EasyPaisa</option>
+          <option value="jazzcash">JazzCash</option>
+          <option value="bank">Bank Transfer</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">Services Included in This Plan</div>
+    <div class="form-row">
+      <div>
+        <div class="form-check">{{ form.uses_cardio_equipment }}<label>{{ form.uses_cardio_equipment.label }}</label></div>
+        <div class="form-check">{{ form.uses_free_weights }}<label>{{ form.uses_free_weights.label }}</label></div>
+        <div class="form-check">{{ form.has_personal_trainer }}<label>{{ form.has_personal_trainer.label }}</label></div>
+      </div>
+      <div>
+        <div class="form-check">{{ form.has_locker }}<label>{{ form.has_locker.label }}</label></div>
+        <div class="form-check">{{ form.has_steam_room }}<label>{{ form.has_steam_room.label }}</label></div>
+      </div>
+    </div>
+    <div class="form-row" id="trainer-row">
+      <div class="form-group"><label>Personal Trainer (if applicable)</label>{{ form.trainer }}</div>
+      <div class="form-group"><label>Sessions / Month</label>{{ form.trainer_sessions_per_month }}</div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label>Notes</label>{{ form.notes }}</div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Assign Plan & Record Payment</button>
+      <a href="{% url 'member_detail' member.pk %}" class="btn">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<div>
+  <div class="panel">
+    <div class="panel-head">Standard Plans</div>
+    <div class="panel-body" style="padding:0;">
+      <table class="data-table">
+        <tr><th>Plan</th><th>Duration</th><th class="text-right">Price</th><th>Features</th></tr>
+        {% for plan in plans %}
+        <tr style="cursor:pointer;" onclick="selectPlan({{ plan.pk }}, '{{ plan.name }}', {{ plan.price }}, {{ plan.includes_trainer|lower }}, {{ plan.includes_locker|lower }}, {{ plan.includes_cardio|lower }})">
+          <td><b>{{ plan.name }}</b></td>
+          <td class="text-small">{{ plan.get_duration_display }}</td>
+          <td class="text-right amount">{{ currency }}{{ plan.price }}</td>
+          <td class="text-small">
+            {% if plan.includes_cardio %}<span class="tag">Cardio</span>{% endif %}
+            {% if plan.includes_trainer %}<span class="tag tag-trainer">PT</span>{% endif %}
+            {% if plan.includes_locker %}<span class="tag">Locker</span>{% endif %}
+            {% if plan.includes_steam %}<span class="tag">Steam</span>{% endif %}
+          </td>
+        </tr>
+        {% empty %}<tr><td colspan="4" class="no-data">No plans. <a href="{% url 'plan_add' %}">Add one →</a></td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  <div class="text-small text-muted mt-8">Click a plan to auto-fill. Or fill in custom fields manually.</div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function selectPlan(id, name, price, trainer, locker, cardio){
+  document.getElementById('id_plan').value = id;
+  document.getElementById('id_amount_paid').value = price;
+  document.getElementById('plan-price-hint').textContent = 'Plan price: {{ currency }}' + price;
+  if(trainer) document.getElementById('id_has_personal_trainer').checked = true;
+  if(locker)  document.getElementById('id_has_locker').checked = true;
+  if(cardio)  document.getElementById('id_uses_cardio_equipment').checked = true;
+}
+</script>
+{% endblock %}

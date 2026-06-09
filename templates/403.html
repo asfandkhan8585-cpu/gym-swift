@@ -1,0 +1,11 @@
+{% extends 'gym/base.html' %}
+{% block title %}Not Allowed{% endblock %}
+{% block content %}
+<div class="auth-wrap" style="margin-top:60px;max-width:480px;">
+  <div class="auth-header" style="background:var(--red,#cc0000);"><div class="auth-logo">403</div><div class="auth-sub">Access denied</div></div>
+  <div class="auth-body" style="text-align:center;">
+    <p style="font-size:13px;margin-bottom:14px;">You don't have permission to view this page.</p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

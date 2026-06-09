@@ -1,0 +1,14 @@
+{% extends 'gym/base.html' %}
+{% block title %}{{ action }} Expense{% endblock %}
+{% block page_header %}<div class="page-header"><h1>{{ action }} Expense</h1><div class="header-actions"><a href="{% url 'expense_list' %}" class="btn btn-sm">← Back</a></div></div>{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <form method="post">{% csrf_token %}
+    <div class="form-row"><div class="form-group"><label>Category *</label>{{ form.category }}</div><div class="form-group"><label>Title *</label>{{ form.title }}</div></div>
+    <div class="form-row thirds"><div class="form-group"><label>Amount ({{ currency }}) *</label>{{ form.amount }}</div><div class="form-group"><label>Date</label>{{ form.expense_date }}</div><div class="form-group"><label>Method</label>{{ form.method }}</div></div>
+    <div class="form-row thirds"><div class="form-group"><label>Vendor</label>{{ form.vendor }}</div><div class="form-group"><label>Receipt #</label>{{ form.receipt_no }}</div><div class="form-group"><label>Linked Employee</label>{{ form.employee }}</div></div>
+    <div class="form-row full"><div class="form-group"><label>Description</label>{{ form.description }}</div></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Save Expense</button><a href="{% url 'expense_list' %}" class="btn">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'gym/base.html' %}
+{% block title %}Lockers{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <h1>Lockers</h1><span class="subtitle">{{ available }} available · {{ occupied }} occupied</span>
+  <div class="header-actions"><a href="{% url 'locker_add' %}" class="btn btn-primary btn-sm">+ Add Locker</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="filter-bar">
+  <form method="get" style="display:flex;gap:8px;align-items:center;">
+    <select name="zone"><option value="">All Zones</option><option value="gents" {% if zone == 'gents' %}selected{% endif %}>Gents</option><option value="ladies" {% if zone == 'ladies' %}selected{% endif %}>Ladies</option><option value="shared" {% if zone == 'shared' %}selected{% endif %}>Shared</option></select>
+    <select name="status"><option value="">All Status</option><option value="available" {% if status == 'available' %}selected{% endif %}>Available</option><option value="occupied" {% if status == 'occupied' %}selected{% endif %}>Occupied</option><option value="maintenance" {% if status == 'maintenance' %}selected{% endif %}>Maintenance</option></select>
+    <button type="submit" class="btn btn-sm">Filter</button>
+    {% if zone or status %}<a href="{% url 'locker_list' %}" class="btn btn-sm">Clear</a>{% endif %}
+  </form>
+</div>
+<div class="locker-grid">
+  {% for l in lockers %}
+  <div class="locker-card {{ l.disp }}">
+    <div class="locker-number">{{ l.locker_number }}</div>
+    <div class="locker-zone">{{ l.get_zone_display }}</div>
+    <div class="locker-status {% if l.disp == 'available' %}text-green{% elif l.disp == 'occupied' %}text-red{% else %}text-orange{% endif %}">{{ l.disp|upper }}</div>
+    {% if l.occ %}<div class="locker-member" title="{{ l.occ.full_name }}"><a href="{% url 'member_detail' l.occ.pk %}">{{ l.occ.full_name }}</a></div>{% endif %}
+    {% if l.monthly_rate %}<div class="text-small text-muted">{{ currency }}{{ l.monthly_rate }}/mo</div>{% endif %}
+    <div style="margin-top:4px;"><a href="{% url 'locker_edit' l.pk %}" class="btn btn-xs">Edit</a>{% if l.disp != 'occupied' %} <a href="{% url 'locker_delete' l.pk %}" class="btn btn-xs btn-red">Delete</a>{% endif %}</div>
+  </div>
+  {% empty %}<div class="no-data" style="grid-column:1/-1;">No lockers yet. <a href="{% url 'locker_add' %}">Add your first locker →</a></div>{% endfor %}
+</div>
+{% endblock %}
